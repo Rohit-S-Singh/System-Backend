@@ -1,4 +1,5 @@
 #import sklearn library
+import sys
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -127,14 +128,22 @@ def recommendation_phase(target_person):
 
     rankings.sort(reverse=True)
     return rankings
-print("Enter the target person")
-tp = input().title()
+# print("Enter the target person")
+tp = sys.argv[1]
 if tp in dataset.keys():
     a=recommendation_phase(tp)
     if a != -1:
-        print("Recommendation Using Item based Collaborative Filtering:  ")
+        # print("Recommendation Using Item based Collaborative Filtering:  ")
         for w,m in a:
             print(m," ---> ",w)
 else:
     print("Person not found in the dataset..please try again")
-
+# import sys
+# try:
+#     width = sys.argv[1]
+#     height = sys.argv[2]
+#     def rectanglePerimeter(width, height):
+#        return ((width + height)*2)
+#     print(rectanglePerimeter(width, height))
+# except EOFError as e:
+#     print(end="")
