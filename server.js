@@ -2,6 +2,7 @@ const express = require("express");
 const reader = require('xlsx')
 const app = express();
 
+
 var cors = require("cors");
 
 app.use(cors());
@@ -30,8 +31,6 @@ app.post("/", async (req, res) => {
 //   res.status(200).json({message:"helloworld"});
 
 
-
-});
 
 const port = 8000;
 app.listen(port, () => console.log(`Server connected to ${port}`));
