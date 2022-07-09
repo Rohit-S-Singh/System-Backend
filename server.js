@@ -13,34 +13,24 @@ app.use(express.json());
 
 const { PythonShell } = require("python-shell");
 
-app.post("/", (req, res) => {
+app.post("/", async (req, res) => {
 
-const file = reader.readFile('./test.xlsx')
+    
+    console.log("coming");
+    console.log(req.body);
 
-var a = req.body;
-  
-// Sample data set
-let student_data = [];
+    
+    //     const spawn = require("child_process").spawn;
+//     const pythonProcess = exec('python3',["./test.py", 2, 4]);
 
-var ob = {};
+//         pythonProcess.stdout.on('data', function(data) {
+//             console.log(data.toString('utf-8'))
+//         } )
 
-Object.keys(a).map((aa)=>{
-  ob[aa] = a[aa];
-})
-
-student_data.push(ob);
-
-console.log("coming");
-  console.log(req.body);
+//   res.status(200).json({message:"helloworld"});
 
 
-  res.status(200).json({message:"helloworld"});
 
-  // PythonShell.run("./test.py", options, function (err, result) {
-  //   if (err) throw err;
-  //   console.log("result: ", result.toString());
-  //   res.send("abc");
-  // });
 });
 
 const port = 8000;
@@ -52,4 +42,35 @@ app.listen(port, () => console.log(`Server connected to ${port}`));
 // reader.utils.book_append_sheet(file,ws,"Sheet3")
   
 // Writing to our file
+
+// const file = reader.readFile('./test.xlsx')
+
+// var a = req.body;
+
+// // Sample data set
+
+// let student_data = [];
+
+// var ob = {};
+
+// Object.keys(a).map((aa)=>{
+//      ob[aa] = a[aa];
+// })
+
+// student_data.push(ob);
+
+    // var options = {
+    //     mode: 'text',
+    //     pythonPath: 'python',
+    //     pythonOptions: ['-u'],
+    //     scriptPath: '',
+    //     args: ['Ritvik', '8']
+    // };
+        
+    
+    // await PythonShell.run("./test.py", options, function (err, result) {
+    //     if (err) throw err;
+    //     console.log("result: ", result);
+    //     res.send("abc");
+    // });
 // reader.writeFile(file,'./test.xlsx')
