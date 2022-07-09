@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Rohit-S-Singh/Recomendation-System-Backend#readme",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.1",
     "msexcel-builder": "0.0.2",
     "nodemon": "^2.0.18",
