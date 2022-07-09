@@ -72,13 +72,9 @@ def item_similarity(item1,item2):
 
     item1_ratings = [[dataset[k][item1] for k,v in both_rated.items() if item1 in dataset[k] and item2 in dataset[k]]]
     item2_ratings = [[dataset[k][item2] for k, v in both_rated.items() if item1 in dataset[k] and item2 in dataset[k]]]
-    #print("{} ratings :: {}".format(item1,item1_ratings))
-    #print("{} ratings :: {}".format(item2,item2_ratings))
     cs = cosine_similarity(item1_ratings,item2_ratings)
     return cs[0][0]
 
-
-print("Cosine Similarity:: ",item_similarity('Panchayat','Special Ops'))
 
 
 def most_similar_items(target_item):
@@ -87,7 +83,6 @@ def most_similar_items(target_item):
     scores.sort(reverse=True)
     return scores
 
-print(most_similar_items('Panchayat'))
 
 #custom function to filter the seen movies and unseen movies of the target user
 
@@ -133,17 +128,7 @@ tp = sys.argv[1]
 if tp in dataset.keys():
     a=recommendation_phase(tp)
     if a != -1:
-        # print("Recommendation Using Item based Collaborative Filtering:  ")
         for w,m in a:
-            print(m," ---> ",w)
+            print(m)
 else:
     print("Person not found in the dataset..please try again")
-# import sys
-# try:
-#     width = sys.argv[1]
-#     height = sys.argv[2]
-#     def rectanglePerimeter(width, height):
-#        return ((width + height)*2)
-#     print(rectanglePerimeter(width, height))
-# except EOFError as e:
-#     print(end="")
