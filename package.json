@@ -17,9 +17,12 @@
   },
   "homepage": "https://github.com/Rohit-S-Singh/Recomendation-System-Backend#readme",
   "dependencies": {
+    "chalk": "^4.1.2",
     "cors": "^2.8.5",
     "express": "^4.18.1",
+    "mongoose": "^6.4.4",
     "msexcel-builder": "0.0.2",
+    "node-fetch": "^2.6.7",
     "nodemon": "^2.0.18",
     "python-shell": "^3.0.1",
     "xlsx": "^0.18.5"
