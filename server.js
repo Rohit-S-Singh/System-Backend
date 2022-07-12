@@ -1,5 +1,5 @@
 const express = require("express");
-const reader = require('xlsx')
+const reader = require("xlsx");
 const app = express();
 const chalk = require("chalk");
 
@@ -20,6 +20,7 @@ app.use(routes);
 const { PythonShell } = require("python-shell");
 
 app.post("/", async (req, res) => {
+
 
     const file = reader.readFile('./test.xlsx')
 
@@ -57,18 +58,32 @@ app.post("/", async (req, res) => {
         res.send("abc");
     });
 
+
+  console.log("coming");
+//   console.log(req.body);
+//   var options = {
+//     mode: "text",
+//     pythonPath: "python",
+//     pythonOptions: ["-u"],
+//     scriptPath: "",
+//     args: ["Ritvik", "8"],
+//   };
+
+//   await PythonShell.run("./test.py", options, function (err, result) {
+//     if (err) throw err;
+//     console.log("result: ", result);
+
+//     // res.send("abc");
+//     res.status(200).json({ message: "helloworld", data: result });
+//   });
+});
+
 //     const spawn = require("child_process").spawn;
 //     const pythonProcess = exec('python3',["./test.py", 2, 4]);
 
 //         pythonProcess.stdout.on('data', function(data) {
 //             console.log(data.toString('utf-8'))
 //         } )
-
-//   res.status(200).json({message:"helloworld"});
-
-
-
-});
 
 const port = 8000;
 app.listen(port, () => console.log(`${chalk.green("✓")} ${chalk.magenta(
