@@ -4,23 +4,23 @@ const { Schema } = Mongoose;
 
 // User Schema
 const UserSchema = new Schema({
-  email: {
+  name: {
     type: String,
     required: () => {
       return this.provider !== 'email' ? false : true;
     }
   },
-  name: {
+  description:{
     type: String
   },
-  password: {
-    type: String
+  rating: {
+    type: Number
   },
   updated: Date,
   created: {
     type: Date,
     default: Date.now
-  },
+  }
 });
 
-module.exports = Mongoose.model('User', UserSchema);
+module.exports = Mongoose.model('Movies', UserSchema);
