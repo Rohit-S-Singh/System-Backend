@@ -1,81 +1,64 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+
+const bcrypt = require("bcrypt");
+
+const passport = require("passport");
+
+// const   authenticate } from 'passport';
+
 // const bcrypt = require('bcryptjs');
 // const jwt = require('jsonwebtoken');
 // const crypto = require('crypto');
 // const passport = require('passport');
 
 // const auth = require('../../middleware/auth');
- 
 
 // Bring in Models & Helpers
-const User = require('../models/user');
+const User = require("../models/user");
+const { application } = require("express");
+const { reset } = require("nodemon");
 // const mailchimp = require('../../services/mailchimp');
 // const nodemailer = require('../../services/nodemailer');
 
 // const keys = require('../../config/keys');
 
 // const { secret, tokenLife } = keys.jwt;
+// app.post(
+//   "/login",
+//   passport.authenticate("local", {
+//     successRedirect: "/",
+//     failureRedirect: "/login",
+//   })
+// );
 
-// router.post('/login', (req, res) => {
-//   const email = req.body.email;
-//   const password = req.body.password;
 
-//   if (!email) {
-//     return res.status(400).json({ error: 'You must enter an email address.' });
-//   }
+router.post("/login", passport.authenticate("local",{
+    //  successRedirect: "/",
+     failureRedirect: "/notfound",
+   }), (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  console.log("gbfbf",req.user);
 
-//   if (!password) {
-//     return res.status(400).json({ error: 'You must enter a password.' });
-//   }
+  if(req.user == null){
+    return res.status(400).json({
+      success:false,
+      message:"Incorrect Password or email please try again."
+    })
+  }
+  else{
+        return res.status(200).json({
+          success: true,
+          // token: `Bearer ${token}`,
+          user: req.user,
+        });
+      }
+});
 
-//   User.findOne({ email }).then(user => {
-//     if (!user) {
-//       return res
-//         .status(400)
-//         .send({ error: 'No user found for this email address.' });
-//     }
-
-//     if (!user) {
-//       return res
-//         .status(400)
-//         .send({ error: 'No user found for this email address.' });
-//     }
-
-//     // if(!user.isverified){
-//     //   return res
-//     //   .status(400)
-//     //   .send({ error: 'Please Verify your account.'});
-//     // }
-
-//     bcrypt.compare(password, user.password).then(isMatch => {
-//       if (isMatch) {
-//         const payload = {
-//           id: user.id
-//         };
-
-//         jwt.sign(payload, secret, { expiresIn: tokenLife }, (err, token) => {
-//           res.status(200).json({
-//             success: true,
-//             token: `Bearer ${token}`,
-//             user: {
-//               id: user.id,
-//               firstName: user.firstName,
-//               lastName: user.lastName,
-//               email: user.email,
-//               role: user.role
-//             }
-//           });
-//         });
-//       } else {
-//         res.status(400).json({
-//           success: false,
-//           error: 'Password Incorrect'
-//         });
-//       }
-//     });
-//   });
-// });
+// app.get("/user",(req,res)=>{
+//   res.send(req.user);
+// })
 
 // // verify email of registered user
 // router.get('/verify/:id', (req,res)=>{
@@ -108,7 +91,6 @@ const User = require('../models/user');
 //       id = doc._id;
 //       var link = process.env.BASE_SERVER_URL + `/api/auth/verify/${id}`;
 
-
 //     const name = doc.firstName + " " + doc.lastName;
 
 //     var data = {
@@ -124,28 +106,18 @@ const User = require('../models/user');
 //   }});
 // });
 
-
-
-
-router.post('/register', (req, res) =>{
-
-    console.log("abcd",req.body);
+router.post("/register", (req, res) => {
+  console.log("abcd", req.body);
   const email = req.body.email;
   const Name = req.body.name;
-//   const lastName = req.body.lastName;
   const password = req.body.password;
-//   const isSubscribed = req.body.isSubscribed;
 
   if (!email) {
-    return res.status(400).json({ error: 'You must enter an email address.' });
+    return res.status(400).json({ error: "You must enter an email address." });
   }
 
-//   if (!firstName || !lastName) {
-//     return res.status(400).json({ error: 'You must enter your full name.' });
-//   }
-
   if (!password) {
-    return res.status(400).json({ error: 'You must enter a password.' });
+    return res.status(400).json({ error: "You must enter a password." });
   }
 
   User.findOne({ email }, async (err, existingUser) => {
@@ -156,70 +128,44 @@ router.post('/register', (req, res) =>{
     if (existingUser) {
       return res
         .status(400)
-        .json({ error: 'That email address is already in use.' });
+        .json({ error: "That email address is already in use." });
     }
-
-//     let subscribed = false;
-//     if (isSubscribed) {
-//       const result = await nodemailer.subscribeToNewsletter(email);
-
-//       if (result.status === 'subscribed') {
-//         subscribed = true;
-//       }
-//     }
 
     const user = new User({
       email,
       password,
       Name,
-//       lastName
     });
 
-//     bcrypt.genSalt(10, (err, salt) => {
-//       bcrypt.hash(user.password, salt, (err, hash) => {
-//         if (err) {
-//           return res.status(400).json({
-//             error: 'Your request could not be processed. Please try again.'
-//           });
-//         }
-
-//         user.password = hash;
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        if (err) {
+          return res.status(400).json({
+            error: "Your request could not be processed. Please try again.",
+          });
+        }
+        console.log("ewfwevewvwevwe");
+        user.password = hash;
 
         user.save(async (err, user) => {
           if (err) {
             console.log(err);
             return res.status(400).json({
-              error: 'Your request could not be processed. Please try again.'
+              error: "Your request could not be processed. Please try again.",
             });
           }
 
           const payload = {
-            id: user.id
+            id: user.id,
           };
 
-        
-
-//           var link = process.env.BASE_SERVER_URL + `/api/auth/verify/${user._id}`
-//           var data = {
-//             "firstName":user.firstName,
-//             "lastName":user.lastName,
-//             "link":link
-//           }
-                
-//           await nodemailer.sendEmail(user.email,'signup-authentication','',data)
-
-            res.status(200).json({
-              success:true,
-              message:"Account Created Sucessfully"
-            //   email:user.email,
-//               name:user.firstName+" "+user.lastName
-            });
+          res.status(200).json({
+            success: true,
+            message: "Account Created Sucessfully",
+          });
         });
       });
-//     });
-//   });
+    });
+  });
 });
-
-
-
 module.exports = router;

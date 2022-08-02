@@ -1,6 +1,9 @@
 const router = require('express').Router();
 
+var passport = require('passport');
+
 const authRoutes = require('./auth');
+const ratingRoutes = require('./ratings');
 // const userRoutes = require('./user');
 // const addressRoutes = require('./address');
 // const newsletterRoutes = require('./newsletter');
@@ -19,6 +22,7 @@ const authRoutes = require('./auth');
 
 // auth routes
 router.use('/auth', authRoutes);
+router.use('/ratings', ratingRoutes);
 
 // // user routes
 // router.use('/user', userRoutes);
