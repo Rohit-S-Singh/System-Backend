@@ -32,29 +32,31 @@ const { reset } = require("nodemon");
 //   })
 // );
 
-
-router.post("/login", passport.authenticate("local",{
+router.post(
+  "/login",
+  passport.authenticate("local", {
     //  successRedirect: "/",
-     failureRedirect: "/notfound",
-   }), (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  console.log("gbfbf",req.user);
+    failureRedirect: "/notfound",
+  }),
+  (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    console.log("gbfbf", req.user);
 
-  if(req.user == null){
-    return res.status(400).json({
-      success:false,
-      message:"Incorrect Password or email please try again."
-    })
+    if (req.user == null) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect Password or email please try again.",
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        // token: `Bearer ${token}`,
+        user: req.user,
+      });
+    }
   }
-  else{
-        return res.status(200).json({
-          success: true,
-          // token: `Bearer ${token}`,
-          user: req.user,
-        });
-      }
-});
+);
 
 // app.get("/user",(req,res)=>{
 //   res.send(req.user);
@@ -109,7 +111,7 @@ router.post("/login", passport.authenticate("local",{
 router.post("/register", (req, res) => {
   console.log("abcd", req.body);
   const email = req.body.email;
-  const Name = req.body.name;
+  const name = req.body.name;
   const password = req.body.password;
 
   if (!email) {
@@ -134,7 +136,7 @@ router.post("/register", (req, res) => {
     const user = new User({
       email,
       password,
-      Name,
+      name,
     });
 
     bcrypt.genSalt(10, (err, salt) => {
