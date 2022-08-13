@@ -4,7 +4,7 @@ var passport = require('passport');
 
 const authRoutes = require('./auth');
 const ratingRoutes = require('./ratings');
-// const userRoutes = require('./user');
+const movies = require('./movies');
 // const addressRoutes = require('./address');
 // const newsletterRoutes = require('./newsletter');
 // const productRoutes = require('./product');
@@ -22,7 +22,8 @@ const ratingRoutes = require('./ratings');
 
 // auth routes
 router.use('/auth', authRoutes);
-router.use('/ratings', ratingRoutes);
+router.use("/ratings", ratingRoutes);
+router.use("/movie", movies);
 
 // // user routes
 // router.use('/user', userRoutes);
