@@ -74,7 +74,9 @@ for name in df.columns[1:]:
 
 
 dataset_df=pd.DataFrame(dataset)
+
 dataset_df.fillna("Not Seen Yet",inplace=True)
+
 dataset_df
 
 def unique_items():
@@ -144,6 +146,8 @@ def recommendation_phase(target_person):
     seen_ratings = [[dataset[target_person][movies],movies] for movies in dataset[target_person]]
     weighted_avg,weighted_sim = 0,0
     rankings =[]
+    if not_seen_movies == 0:
+        return -1
     for i in not_seen_movies:
         for rate,movie in seen_ratings:
             item_sim=item_similarity(i,movie)
@@ -154,12 +158,15 @@ def recommendation_phase(target_person):
 
     rankings.sort(reverse=True)
     return rankings
-# print("Enter the target person")
+
 tp = sys.argv[1]
+print(tp)
 if tp in dataset.keys():
     a=recommendation_phase(tp)
     print(a)
     if a != -1:
+        if len(a) == 0:
+            a.append("No Movies to Recommend")
         for w,m in a:
             print(m)
 else:
