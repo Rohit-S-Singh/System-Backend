@@ -1,51 +1,82 @@
 #import sklearn library
 import sys
-import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-dataset={
-        'Rahul': {'Special Ops': 5,
-                  'Criminal Justice': 3,
-                  'Panchayat': 3,
-                  'Sacred Games': 3,
-                  'Apharan': 2,
-                  'Mirzapur': 3},
+import pandas as pd
+import math
+
+
+
+df = pd.read_csv("ratings.csv")
+
+# # print(df)
+
+dataset = {}
+movies = list(df['dummy'])
+n = len(movies)
+
+for name in df.columns[1:]:
+    rating = list(df[name])
     
-        'Rishabh': {'Special Ops': 5,
-                    'Criminal Justice': 3,
-                    'Sacred Games': 5,
-                    'Panchayat':5,
-                    'Mirzapur': 3,
-                    'Apharan': 3},
+    ratings = [x for x in rating if math.isnan(x) == False]
+
     
-        'Sonali': {'Special Ops': 2,
-                   'Panchayat': 5,
-                   'Sacred Games': 3,
-                   'Mirzapur': 4},
+    for i in range(len(ratings)):
+        if name in dataset:
+                dataset[name][movies[i]] = int(ratings[i])
+        else:
+            dataset[name] = dict({movies[i]: int(ratings[i])})
+
+# print(dt)
+
+# dataset1={
+#         'Rahul': {'Special Ops': 5,
+#                   'Criminal Justice': 3,
+#                   'Panchayat': 3,
+#                   'Sacred Games': 3,
+#                   'Apharan': 2,
+#                   'Mirzapur': 3},
     
-        'Ritvik': {'Panchayat': 5,
-                   'Mirzapur': 4,
-                   'Sacred Games': 4,},
+#         'Rishabh': {'Special Ops': 5,
+#                     'Criminal Justice': 3,
+#                     'Sacred Games': 5,
+#                     'Panchayat':5,
+#                     'Mirzapur': 3,
+#                     'Apharan': 3},
     
-       'Harshita': {'Special Ops': 4,
-                    'Criminal Justice': 4,
-                    'Panchayat': 4,
-                    'Mirzapur': 3,
-                    'Apharan': 2},
+#         'Sonali': {'Special Ops': 2,
+#                    'Panchayat': 5,
+#                    'Sacred Games': 3,
+#                    'Mirzapur': 4},
     
-       'Shubhi': {'Special Ops': 3,
-                  'Panchayat': 4,
-                  'Mirzapur': 3,
-                  'Sacred Games': 5,
-                  'Apharan': 3},
+#         'Ritvik': {'Panchayat': 5,
+#                    'Mirzapur': 4,
+#                    'Sacred Games': 4,},
     
-      'Shaurya': {'Panchayat':4,
-                  'Apharan':1,
-                  'Sacred Games':4}}
+#        'Harshita': {'Special Ops': 4,
+#                     'Criminal Justice': 4,
+#                     'Panchayat': 4,
+#                     'Mirzapur': 3,
+#                     'Apharan': 2},
+    
+#        'Shubhi': {'Special Ops': 3,
+#                   'Panchayat': 4,
+#                   'Mirzapur': 3,
+#                   'Sacred Games': 5,
+#                   'Apharan': 3},
+    
+#       'Shaurya': {'Panchayat':4,
+#                   'Apharan':1,
+#                   'Sacred Games':4}}
+
+# if(dataset==dataset1):
+#     print("EQUAL")
 
 
 dataset_df=pd.DataFrame(dataset)
+
 dataset_df.fillna("Not Seen Yet",inplace=True)
+
 dataset_df
 
 def unique_items():
@@ -68,7 +99,7 @@ def item_similarity(item1,item2):
     #print(both_rated)
     number_of_ratings = len(both_rated)
     if number_of_ratings == 0:
-        return 0
+        return 0,0
 
     item1_ratings = [[dataset[k][item1] for k,v in both_rated.items() if item1 in dataset[k] and item2 in dataset[k]]]
     item2_ratings = [[dataset[k][item2] for k, v in both_rated.items() if item1 in dataset[k] and item2 in dataset[k]]]
@@ -96,14 +127,16 @@ def target_movies_to_users(target_person):
     recommended_movies=list(s.difference(target_person_movie_lst))
     a = len(recommended_movies)
     if a == 0:
-        return 0
+        return 0,0
     return recommended_movies,target_person_movie_lst
 
 
 unseen_movies,seen_movies=target_movies_to_users('Ritvik')
 
-dct = {"Unseen Movies":unseen_movies,"Seen Movies":seen_movies}
-pd.DataFrame(dct)
+# dct = {"Unseen Movies":unseen_movies,"Seen Movies":seen_movies}
+pd.DataFrame({"Unseen Movies":[unseen_movies],"Seen Movies":[seen_movies]})
+
+# {'A': [a], 'B': [b]}
 
 def recommendation_phase(target_person):
     if target_movies_to_users(target_person=target_person) == 0:
@@ -113,6 +146,8 @@ def recommendation_phase(target_person):
     seen_ratings = [[dataset[target_person][movies],movies] for movies in dataset[target_person]]
     weighted_avg,weighted_sim = 0,0
     rankings =[]
+    if not_seen_movies == 0:
+        return -1
     for i in not_seen_movies:
         for rate,movie in seen_ratings:
             item_sim=item_similarity(i,movie)
@@ -123,11 +158,15 @@ def recommendation_phase(target_person):
 
     rankings.sort(reverse=True)
     return rankings
-# print("Enter the target person")
+
 tp = sys.argv[1]
+print(tp)
 if tp in dataset.keys():
     a=recommendation_phase(tp)
+    print(a)
     if a != -1:
+        if len(a) == 0:
+            a.append("No Movies to Recommend")
         for w,m in a:
             print(m)
 else:

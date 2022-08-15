@@ -33,8 +33,12 @@ app.use(routes);
 const { PythonShell } = require("python-shell");
 
 
-app.post("/", async (req, res) => {
+app.post("/:name", async (req, res) => {
   const file = reader.readFile("./test.xlsx");
+
+  var name = req.params.name;
+
+   console.log(name,"nameeeeeeeeee");
 
   var a = req.body;
 
@@ -56,7 +60,7 @@ app.post("/", async (req, res) => {
     pythonPath: "python",
     pythonOptions: ["-u"],
     scriptPath: "",
-    args: ["Ritvik", "8", "value3"],
+    args: [name],
   };
 
   await PythonShell.run("./test.py", options, function (err, result) {
@@ -65,6 +69,8 @@ app.post("/", async (req, res) => {
     res.send("abc");
   });
 });
+
+
 //home Route
 
 app.get('/notfound',(req,res)=>{
@@ -83,6 +89,32 @@ app.listen(port, () =>
     )}`
   )
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //     const spawn = require("child_process").spawn;
