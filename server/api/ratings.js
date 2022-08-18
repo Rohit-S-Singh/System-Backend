@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 // const bcrypt = require('bcryptjs');
@@ -7,10 +7,9 @@ const router = express.Router();
 // const passport = require('passport');
 
 // const auth = require('../../middleware/auth');
- 
 
 // Bring in Models & Helpers
-const User = require('../models/user');
+const User = require("../models/user");
 // const mailchimp = require('../../services/mailchimp');
 // const nodemailer = require('../../services/nodemailer');
 
@@ -79,22 +78,16 @@ const User = require('../models/user');
 // });
 
 // // verify email of registered user
-router.get('/addRatings/:id', (req,res)=>{
+router.get("/addRatings/:id", (req, res) => {
+  console.log("Hello World");
 
-    console.log("Hello World");
-
-     res.status(200).json({
-              success:true,
-              message:"Account Created Sucessfully"
-            //   email:user.email,
-//               name:user.firstName+" "+user.lastName
-            });
-        });
-    //   });
-
-
-
-
+  res.status(200).json({
+    success: true,
+    message: "Account Created Sucessfully",
+    //   email:user.email,
+    //               name:user.firstName+" "+user.lastName
+  });
+});
 
 //   User.findOneAndUpdate({_id:req.params.id} , {isverified:true} , (err,data)=>{
 //     if(err){
@@ -124,7 +117,6 @@ router.get('/addRatings/:id', (req,res)=>{
 //       id = doc._id;
 //       var link = process.env.BASE_SERVER_URL + `/api/auth/verify/${id}`;
 
-
 //     const name = doc.firstName + " " + doc.lastName;
 
 //     var data = {
@@ -140,28 +132,24 @@ router.get('/addRatings/:id', (req,res)=>{
 //   }});
 // });
 
-
-
-
-router.post('/register', (req, res) =>{
-
-    console.log("abcd",req.body);
+router.post("/register", (req, res) => {
+  console.log("abcd", req.body);
   const email = req.body.email;
   const Name = req.body.name;
-//   const lastName = req.body.lastName;
+  //   const lastName = req.body.lastName;
   const password = req.body.password;
-//   const isSubscribed = req.body.isSubscribed;
+  //   const isSubscribed = req.body.isSubscribed;
 
   if (!email) {
-    return res.status(400).json({ error: 'You must enter an email address.' });
+    return res.status(400).json({ error: "You must enter an email address." });
   }
 
-//   if (!firstName || !lastName) {
-//     return res.status(400).json({ error: 'You must enter your full name.' });
-//   }
+  //   if (!firstName || !lastName) {
+  //     return res.status(400).json({ error: 'You must enter your full name.' });
+  //   }
 
   if (!password) {
-    return res.status(400).json({ error: 'You must enter a password.' });
+    return res.status(400).json({ error: "You must enter a password." });
   }
 
   User.findOne({ email }, async (err, existingUser) => {
@@ -172,70 +160,66 @@ router.post('/register', (req, res) =>{
     if (existingUser) {
       return res
         .status(400)
-        .json({ error: 'That email address is already in use.' });
+        .json({ error: "That email address is already in use." });
     }
 
-//     let subscribed = false;
-//     if (isSubscribed) {
-//       const result = await nodemailer.subscribeToNewsletter(email);
+    //     let subscribed = false;
+    //     if (isSubscribed) {
+    //       const result = await nodemailer.subscribeToNewsletter(email);
 
-//       if (result.status === 'subscribed') {
-//         subscribed = true;
-//       }
-//     }
+    //       if (result.status === 'subscribed') {
+    //         subscribed = true;
+    //       }
+    //     }
 
     const user = new User({
       email,
       password,
       Name,
-//       lastName
+      //       lastName
     });
 
-//     bcrypt.genSalt(10, (err, salt) => {
-//       bcrypt.hash(user.password, salt, (err, hash) => {
-//         if (err) {
-//           return res.status(400).json({
-//             error: 'Your request could not be processed. Please try again.'
-//           });
-//         }
+    //     bcrypt.genSalt(10, (err, salt) => {
+    //       bcrypt.hash(user.password, salt, (err, hash) => {
+    //         if (err) {
+    //           return res.status(400).json({
+    //             error: 'Your request could not be processed. Please try again.'
+    //           });
+    //         }
 
-//         user.password = hash;
+    //         user.password = hash;
 
-        user.save(async (err, user) => {
-          if (err) {
-            console.log(err);
-            return res.status(400).json({
-              error: 'Your request could not be processed. Please try again.'
-            });
-          }
-
-          const payload = {
-            id: user.id
-          };
-
-        
-
-//           var link = process.env.BASE_SERVER_URL + `/api/auth/verify/${user._id}`
-//           var data = {
-//             "firstName":user.firstName,
-//             "lastName":user.lastName,
-//             "link":link
-//           }
-                
-//           await nodemailer.sendEmail(user.email,'signup-authentication','',data)
-
-            res.status(200).json({
-              success:true,
-              message:"Account Created Sucessfully"
-            //   email:user.email,
-//               name:user.firstName+" "+user.lastName
-            });
+    user.save(async (err, user) => {
+      if (err) {
+        console.log(err);
+        return res.status(400).json({
+          error: "Your request could not be processed. Please try again.",
         });
+      }
+
+      const payload = {
+        id: user.id,
+      };
+
+      //           var link = process.env.BASE_SERVER_URL + `/api/auth/verify/${user._id}`
+      //           var data = {
+      //             "firstName":user.firstName,
+      //             "lastName":user.lastName,
+      //             "link":link
+      //           }
+
+      //           await nodemailer.sendEmail(user.email,'signup-authentication','',data)
+
+      res.status(200).json({
+        success: true,
+        message: "Account Created Sucessfully",
+        //   email:user.email,
+        //               name:user.firstName+" "+user.lastName
       });
-//     });
-//   });
+    });
+  });
+  //     });
+  //   });
 });
-
-
 
 module.exports = router;
