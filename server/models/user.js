@@ -7,19 +7,25 @@ const UserSchema = new Schema({
   email: {
     type: String,
     required: () => {
-      return this.provider !== 'email' ? false : true;
-    }
+      return this.provider !== "email" ? false : true;
+    },
   },
   name: {
-    type: String
+    type: String,
   },
   password: {
-    type: String
+    type: String,
   },
   updated: Date,
   created: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+  },
+  givenRatings: {
+    type: Schema.Types.Mixed,
+  },
+  Recommendations: {
+    type: [String],
   },
 });
 

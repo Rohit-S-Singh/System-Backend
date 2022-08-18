@@ -72,8 +72,6 @@ router.get("/get",async (req,res)=>{
 
   const Movies = await Movie.find({});
 
-  console.log(Movies);
-
   res.status(200).json({
     success: true,
     message: "Movie Created Sucessfully",
