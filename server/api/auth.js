@@ -34,27 +34,28 @@ const { reset } = require("nodemon");
 
 router.post(
   "/login",
-  passport.authenticate("local", {
-    //  successRedirect: "/",
-    failureRedirect: "/notfound",
-  }),
+  // passport.authenticate("local", {
+  //   //  successRedirect: "/",
+  //   failureRedirect: "/notfound",
+  // }),
   (req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
-    console.log("gbfbf", req.user);
+    console.log('abcd');
+    // const email = req.body.email;
+    // const password = req.body.password;
+    // console.log("gbfbf", req.user);
 
-    if (req.user == null) {
-      return res.status(400).json({
-        success: false,
-        message: "Incorrect Password or email please try again.",
-      });
-    } else {
+    // if (req.user == null) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Incorrect Password or email please try again.",
+    //   });
+    // } else {
       return res.status(200).json({
         success: true,
         // token: `Bearer ${token}`,
-        user: req.user,
+        user: {},
       });
-    }
+    // }
   }
 );
 
@@ -108,29 +109,20 @@ router.post(
 //   }});
 // });
 
-router.post("/register", (req, res) => {
-  console.log("abcd", req.body);
-  const email = req.body.email;
-  const name = req.body.name;
-  const password = req.body.password;
+router.post("/register", async (req, res) => {
 
-  if (!email) {
-    return res.status(400).json({ error: "You must enter an email address." });
-  }
+  try {
+    console.log("abcd", req.body);
+    const email = req.body.email;
+    const name = req.body.name;
+    const password = req.body.password;
 
-  if (!password) {
-    return res.status(400).json({ error: "You must enter a password." });
-  }
-
-  User.findOne({ email }, async (err, existingUser) => {
-    if (err) {
-      next(err);
+    if (!email) {
+      return res.status(400).json({ error: "You must enter an email address." });
     }
 
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ error: "That email address is already in use." });
+    if (!password) {
+      return res.status(400).json({ error: "You must enter a password." });
     }
 
     const user = new User({
@@ -139,35 +131,92 @@ router.post("/register", (req, res) => {
       name,
     });
 
-    bcrypt.genSalt(10, (err, salt) => {
-      bcrypt.hash(user.password, salt, (err, hash) => {
-        if (err) {
-          return res.status(400).json({
-            error: "Your request could not be processed. Please try again.",
-          });
-        }
-        console.log("ewfwevewvwevwe");
-        user.password = hash;
+    const savedUser = await user.save();
 
-        user.save(async (err, user) => {
-          if (err) {
-            console.log(err);
-            return res.status(400).json({
-              error: "Your request could not be processed. Please try again.",
-            });
-          }
-
-          const payload = {
-            id: user.id,
-          };
-
-          res.status(200).json({
-            success: true,
-            message: "Account Created Sucessfully",
-          });
-        });
-      });
+    res.status(200).json({
+      success: true,
+      message: "Account Created Successfully",
+      user: savedUser,
     });
-  });
+    // user.save();
+    // async (err, user) => {
+    //   if (err) {
+    //     console.log(err);
+    //     return res.status(400).json({
+    //       error: "Your request could not be processed. Please try again.",
+    //     });
+    //   }
+
+    //   const payload = {
+    //     id: user.id,
+    //   };
+
+    //   return res.status(200).json({
+    //     success: true,
+    //     message: "Account Created Sucessfully",
+    //   });
+    // });
+
+    // console.log(resp);
+
+    const us = await User.findOne({ email });
+
+    console.log(us);
+
+    // User.findOne({ email }, async (err, existingUser) => {
+    //   if (err) {
+    //     console.log(err);
+    //     return;
+    //     // next(err);
+    //   }
+
+    //   if (existingUser) {
+    //     return res
+    //       .status(400)
+    //       .json({ error: "That email address is already in use." });
+    //   }
+
+    //   const user = new User({
+    //     email,
+    //     password,
+    //     name,
+    //   });
+
+    //   bcrypt.genSalt(10, (err, salt) => {
+    //     bcrypt.hash(user.password, salt, (err, hash) => {
+    //       if (err) {
+    //         return res.status(400).json({
+    //           error: "Your request could not be processed. Please try again.",
+    //         });
+    //       }
+    //       console.log("ewfwevewvwevwe");
+    //       user.password = hash;
+
+    //       user.save(async (err, user) => {
+    //         if (err) {
+    //           console.log(err);
+    //           return res.status(400).json({
+    //             error: "Your request could not be processed. Please try again.",
+    //           });
+    //         }
+
+    //         const payload = {
+    //           id: user.id,
+    //         };
+
+    //         res.status(200).json({
+    //           success: true,
+    //           message: "Account Created Sucessfully",
+    //         });
+    //       });
+    //     });
+    //   });
+    // });
+
+  }
+  catch (err) {
+    console.log(err);
+  }
+
 });
 module.exports = router;
