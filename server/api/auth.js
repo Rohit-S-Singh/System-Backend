@@ -126,6 +126,25 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "You must enter a password." });
     }
 
+    var user = new User({
+      email,
+      name,
+      password
+    });
+    
+    user.save(function (err, results) {
+      if(err){
+        console.log("error");
+      }
+      else{
+        res.status(200).json({
+          success: true,
+          message: "Account Created Successfully",
+          user: results,
+        });
+      }
+    });
+
     // const user = await User.create({
     //   email,
     //   password,
@@ -134,11 +153,11 @@ router.post("/register", async (req, res) => {
 
     // const savedUser = await user.save();
 
-    // res.status(200).json({
-    //   success: true,
-    //   message: "Account Created Successfully",
-    //   user: savedUser,
-    // });
+    res.status(200).json({
+      success: true,
+      message: "Account Created Successfully",
+      user: savedUser,
+    });
     // user.save();
     // async (err, user) => {
     //   if (err) {
