@@ -51,11 +51,11 @@ router.post(
     //     message: "Incorrect Password or email please try again.",
     //   });
     // } else {
-      return res.status(200).json({
-        success: true,
-        // token: `Bearer ${token}`,
-        user: {},
-      });
+    return res.status(200).json({
+      success: true,
+      // token: `Bearer ${token}`,
+      user: {},
+    });
     // }
   }
 );
@@ -126,19 +126,19 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "You must enter a password." });
     }
 
-    const user = new User({
-      email,
-      password,
-      name,
-    });
+    // const user = await User.create({
+    //   email,
+    //   password,
+    //   name,
+    // }, {maxTimeMS: 30000 });
 
-    const savedUser = await user.save();
+    // const savedUser = await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Account Created Successfully",
-      user: savedUser,
-    });
+    // res.status(200).json({
+    //   success: true,
+    //   message: "Account Created Successfully",
+    //   user: savedUser,
+    // });
     // user.save();
     // async (err, user) => {
     //   if (err) {
