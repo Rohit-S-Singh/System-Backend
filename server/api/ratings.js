@@ -89,6 +89,17 @@ router.get("/addRatings/:id", (req, res) => {
   });
 });
 
+router.get("/", (req, res) => {
+  console.log("Hello World");
+
+  res.status(200).json({
+    success: true,
+    message: "Coming here",
+    //   email:user.email,
+    //               name:user.firstName+" "+user.lastName
+  });
+});
+
 //   User.findOneAndUpdate({_id:req.params.id} , {isverified:true} , (err,data)=>{
 //     if(err){
 //       res.status(400).json({error: 'Could not find User.'})
