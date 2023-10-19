@@ -190,6 +190,11 @@ app.post("/:name", async (req, res) => {
 
 //home Route
 
+app.get('/', (req, res) => {
+  res.send('hello world')
+})
+
+
 app.get("/notfound", (req, res) => {
   return res.status(400).json({
     success: false,
