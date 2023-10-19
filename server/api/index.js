@@ -21,6 +21,7 @@ const movies = require('./movies');
 // const payementRoutes = require("./payment");
 
 // auth routes
+
 router.use('/auth', authRoutes);
 router.use("/ratings", ratingRoutes);
 router.use("/movie", movies);
