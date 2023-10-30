@@ -27,171 +27,173 @@ app.use(
   })
 );
 app.use(cookieParser("secretcode"));
+
+
 app.use(passport.initialize());
 app.use(passport.session());
 require("../Recomendation-System-Backend/server/passportConfig")(passport);
 
-app.use(routes);
+// app.use(routes);
 
 //required to run python
-const { PythonShell } = require("python-shell");
+// const { PythonShell } = require("python-shell");
 
-app.post("/:name", async (req, res) => {
-  console.log(req.body);
+// app.post("/:name", async (req, res) => {
+//   console.log(req.body);
 
-  var users = [];
+//   var users = [];
 
-  fs.createReadStream("ratings.csv")
-    .pipe(csv())
-    .on("data", function (row) {
-      var arr = Object.keys(row);
+//   fs.createReadStream("ratings.csv")
+//     .pipe(csv())
+//     .on("data", function (row) {
+//       var arr = Object.keys(row);
 
-      const user = {
-        movie: row.dummy,
-      };
+//       const user = {
+//         movie: row.dummy,
+//       };
 
-      for (var i = 1; i < arr.length; i++) {
-        user[arr[i]] = row[arr[i]];
-      }
+//       for (var i = 1; i < arr.length; i++) {
+//         user[arr[i]] = row[arr[i]];
+//       }
 
-      users.push(user);
-    })
-    .on("end", function () {
-      // we have users as []
+//       users.push(user);
+//     })
+//     .on("end", function () {
+//       // we have users as []
 
-      const newUser = req.params.name;
-      const NewRating = {
-        movie: Object.keys(req.body)[0],
-        Rating: req.body[Object.keys(req.body)[0]],
-      };
+//       const newUser = req.params.name;
+//       const NewRating = {
+//         movie: Object.keys(req.body)[0],
+//         Rating: req.body[Object.keys(req.body)[0]],
+//       };
 
-      console.log("newUser",newUser);
-      console.log("newUser", NewRating);
+//       console.log("newUser",newUser);
+//       console.log("newUser", NewRating);
 
-         var ourUsers = Object.keys(users[0]);
-         ourUsers.splice(0, 1);
+//          var ourUsers = Object.keys(users[0]);
+//          ourUsers.splice(0, 1);
 
-         var ourMovies = [];
+//          var ourMovies = [];
 
-         for (var i = 0; i < users.length; i++) {
-           ourMovies.push(users[i].movie);
-         }
+//          for (var i = 0; i < users.length; i++) {
+//            ourMovies.push(users[i].movie);
+//          }
 
-         var indexMovie = ourMovies.indexOf(NewRating.movie);
-         var indexUser = ourUsers.indexOf(newUser);
+//          var indexMovie = ourMovies.indexOf(NewRating.movie);
+//          var indexUser = ourUsers.indexOf(newUser);
 
-         console.log(indexMovie, " ", indexUser);
+//          console.log(indexMovie, " ", indexUser);
 
-         if (indexUser === -1) {
-           ourUsers.push(newUser);
-           users.map((user) => {
-             user[newUser] = "";
-           });
+//          if (indexUser === -1) {
+//            ourUsers.push(newUser);
+//            users.map((user) => {
+//              user[newUser] = "";
+//            });
 
-           if (indexMovie != -1) {
-             users[indexMovie][newUser] = NewRating.Rating;
-           }
-         }
+//            if (indexMovie != -1) {
+//              users[indexMovie][newUser] = NewRating.Rating;
+//            }
+//          }
 
-         if (indexMovie === -1) {
-           var obj = {};
-           ourMovies.push(NewRating.movie);
-           obj["movie"] = NewRating.movie;
+//          if (indexMovie === -1) {
+//            var obj = {};
+//            ourMovies.push(NewRating.movie);
+//            obj["movie"] = NewRating.movie;
 
-           for (var i = 0; i < ourUsers.length; i++) {
-             obj[ourUsers[i]] = "";
-           }
-           users.push(obj);
-           users[users.length - 1][newUser] = NewRating.Rating;
-         }
+//            for (var i = 0; i < ourUsers.length; i++) {
+//              obj[ourUsers[i]] = "";
+//            }
+//            users.push(obj);
+//            users[users.length - 1][newUser] = NewRating.Rating;
+//          }
 
-         var arrr = [];
+//          var arrr = [];
 
-         arrr = Object.keys(users[0]);
+//          arrr = Object.keys(users[0]);
 
-         // for(var i = 0 ; i < users.length ; i++){
-         //     arrr.push(users[i].movie);
-         // }
+//          // for(var i = 0 ; i < users.length ; i++){
+//          //     arrr.push(users[i].movie);
+//          // }
 
-         arrr.splice(0, 1);
+//          arrr.splice(0, 1);
 
-         var br = [];
+//          var br = [];
 
-         br.push({ id: "dummy", title: "dummy" });
+//          br.push({ id: "dummy", title: "dummy" });
 
-         for (var i = 0; i < arrr.length; i++) {
-           br.push({ id: arrr[i], title: arrr[i] });
-         }
+//          for (var i = 0; i < arrr.length; i++) {
+//            br.push({ id: arrr[i], title: arrr[i] });
+//          }
 
-         const csvWriter = createCsvWriter({
-           path: "ratings.csv",
-           header: br,
-         });
+//          const csvWriter = createCsvWriter({
+//            path: "ratings.csv",
+//            header: br,
+//          });
 
-         const data = [];
+//          const data = [];
 
-         var z = 0;
+//          var z = 0;
 
-         console.log(ourUsers);
+//          console.log(ourUsers);
 
-         for (var i = 0; i < users.length; i++) {
-           var obj = {};
+//          for (var i = 0; i < users.length; i++) {
+//            var obj = {};
 
-           var movie = users[i].movie;
+//            var movie = users[i].movie;
 
-           obj["dummy"] = users[i].movie;
+//            obj["dummy"] = users[i].movie;
 
-           for (var j = 0; j < ourUsers.length; j++) {
-             obj[ourUsers[j]] = users[i][ourUsers[j]];
-           }
-           data.push(obj);
-         }
+//            for (var j = 0; j < ourUsers.length; j++) {
+//              obj[ourUsers[j]] = users[i][ourUsers[j]];
+//            }
+//            data.push(obj);
+//          }
 
-      csvWriter
-        .writeRecords(data)
-        .then(() => console.log("The CSV file was written successfully"));
-    });
+//       csvWriter
+//         .writeRecords(data)
+//         .then(() => console.log("The CSV file was written successfully"));
+//     });
 
-  const file = reader.readFile("./test.xlsx");
+//   const file = reader.readFile("./test.xlsx");
 
-  var name = req.params.name;
+//   var name = req.params.name;
 
-  console.log(name, "nameeeeeeeeee");
+//   console.log(name, "nameeeeeeeeee");
 
-  var a = req.body;
+//   var a = req.body;
 
-  let student_data = [];
+//   let student_data = [];
 
-  var ob = {};
+//   var ob = {};
 
-  Object.keys(a).map((aa) => {
-    ob[aa] = a[aa];
-  });
+//   Object.keys(a).map((aa) => {
+//     ob[aa] = a[aa];
+//   });
 
-  student_data.push(ob);
+//   student_data.push(ob);
 
-  console.log("coming");
-  console.log(req.body);
+//   console.log("coming");
+//   console.log(req.body);
 
-  var options = {
-    mode: "text",
-    pythonPath: "python",
-    pythonOptions: ["-u"],
-    scriptPath: "",
-    args: [name],
-  };
+//   var options = {
+//     mode: "text",
+//     pythonPath: "python",
+//     pythonOptions: ["-u"],
+//     scriptPath: "",
+//     args: [name],
+//   };
 
-  await PythonShell.run("./test.py", options, function (err, result) {
-    if (err) throw err;
-    console.log("result: ", result);
-    res.send("abc");
-  });
-});
+//   await PythonShell.run("./test.py", options, function (err, result) {
+//     if (err) throw err;
+//     console.log("result: ", result);
+//     res.send("abc");
+//   });
+// });
 
 //home Route
 
 app.get('/', (req, res) => {
-  res.send('hello world')
+  res.send('Hey this is my API running 🥳')
 })
 
 
