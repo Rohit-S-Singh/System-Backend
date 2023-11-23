@@ -1,3 +1,75 @@
+const express = require('express')
+
+const app = express()
+// const PORT = 9000
+
+
+
+app.get('/', (req, res) => {
+  res.send('Hey this is my API running 🥳') 
+})
+
+// dbdata
+let users = [{email:"rohit.singh0@gmail.com",password:"12345"},{email:"rohit.singh1@gmail.com",password:"12345"},{email:"rohit.singh2@gmail.com",password:"12345"}]
+
+
+// username/email/name + password
+
+app.get('/auth', (req,res)=>{
+
+  let email = req.body.email;
+  let password = req.body.password;
+
+  //checking
+  if(users.includes({"email":email,"password":password})){
+    return res.json({
+      status:200,
+      message:"User Found",
+      data:users[0]
+    })
+  }
+  else{
+    return res.json({
+      status:400,
+      message:"User not Found",
+      data:null
+    })
+  }
+})
+
+
+// listening to my server
+const port = process.env.PORT || 3000;
+
+// Listen on `port` and 0.0.0.0
+app.listen(port, "0.0.0.0", (req,res)=> {
+  // ...
+
+  console.log("listening");
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // // const express = require("express");
 // // const reader = require("xlsx");
 // // const app = express();
@@ -213,36 +285,3 @@
 // //     )}`
 // //   )
 // // );
-
-// // index.js
-const express = require('express')
-
-const app = express()
-// const PORT = 9000
-
-
-
-app.get('/', (req, res) => {
-  res.send('Hey this is my API running 🥳') 
-})
-
-// app.get('/about', (req, res) => {
-//   res.send('This is my about route..... ')
-// })
-
-
-// app.listen(PORT, () => {
-//   console.log(`API listening on PORT ${PORT} `)
-// })
-
-// // Export the Express API
-// module.exports = app
-
-const port = process.env.PORT || 3000;
-
-// Listen on `port` and 0.0.0.0
-app.listen(port, "0.0.0.0", (req,res)=> {
-  // ...
-
-  console.log("listenign");
-});
