@@ -3,17 +3,53 @@ const express = require('express')
 const app = express()
 // const PORT = 9000
 
+const http = require('http');
+// const socketIo = require('socket.io');
 
+const server = http.createServer(app);
+// const io = socketIo(server);
+
+const io = require('socket.io')(server, {
+  cors: {
+    origin: '*',
+  }
+});
+
+
+io.on('connection', (socket) => {
+  console.log('A client connected');
+
+  // Example: Send a message to the client when they connect
+  socket.emit('message', 'Welcome to the server!');
+
+  // Example: Listen for messages from the client
+  socket.on('new-message', (data) => {
+      console.log('Message from client:', data);
+
+      // Example: Broadcast the received message to all clients
+      io.emit('rcvd-message', data);
+  });
+
+  // Example: Listen for disconnect events
+  socket.on('disconnect', () => {
+      console.log('A client disconnected');
+  });
+});
 
 app.get('/', (req, res) => {
   res.send('Hey this is my API running 🥳') 
 })
 
+
+
+
+
+
+
+
+
 // dbdata
 let users = [{email:"rohit.singh0@gmail.com",password:"12345"},{email:"rohit.singh1@gmail.com",password:"12345"},{email:"rohit.singh2@gmail.com",password:"12345"}]
-
-
-// username/email/name + password
 
 app.get('/auth', (req,res)=>{
 
@@ -39,15 +75,21 @@ app.get('/auth', (req,res)=>{
 
 
 // listening to my server
-const port = process.env.PORT || 3000;
+const port = process.env.PORT ||8080;
 
 // Listen on `port` and 0.0.0.0
-app.listen(port, "0.0.0.0", (req,res)=> {
+server.listen(port, "0.0.0.0", (req,res)=> {
   // ...
 
   console.log("listening");
 });
 
+//local test
+// server.listen(port, (req,res)=> {
+//   // ...
+
+//   console.log("listening");
+// });
 
 
 
