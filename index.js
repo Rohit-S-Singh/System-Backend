@@ -42,12 +42,6 @@ app.get('/', (req, res) => {
 
 
 
-
-
-
-
-
-
 // dbdata
 let users = [{email:"rohit.singh0@gmail.com",password:"12345"},{email:"rohit.singh1@gmail.com",password:"12345"},{email:"rohit.singh2@gmail.com",password:"12345"}]
 
@@ -78,18 +72,18 @@ app.get('/auth', (req,res)=>{
 const port = process.env.PORT ||8080;
 
 // Listen on `port` and 0.0.0.0
-server.listen(port, "0.0.0.0", (req,res)=> {
-  // ...
-
-  console.log("listening");
-});
-
-//local test
-// server.listen(port, (req,res)=> {
+// server.listen(port, "0.0.0.0", (req,res)=> {
 //   // ...
 
 //   console.log("listening");
 // });
+
+// local test
+server.listen(port, (req,res)=> {
+  // ...
+
+  console.log("listening");
+});
 
 
 
