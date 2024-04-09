@@ -38,3 +38,30 @@ exports.getAllCommunities = async (req, res) => {
         });
     }
 };
+
+
+// Delete a community by ID
+exports.deleteCommunity = async (req, res) => {
+    try {
+        // Find the community by ID and delete it
+        const deletedCommunity = await Community.findByIdAndDelete(req.params.id);
+
+        if (!deletedCommunity) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Community not found'
+            });
+        }
+
+        res.status(204).json({
+            status: 'success',
+            message: 'Community deleted successfully',
+            data: null // No content to return
+        });
+    } catch (err) {
+        res.status(500).json({
+            status: 'error',
+            message: err.message
+        });
+    }
+};
