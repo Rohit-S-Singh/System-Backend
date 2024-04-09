@@ -53,10 +53,10 @@ exports.deleteCommunity = async (req, res) => {
             });
         }
 
-        res.status(204).json({
+        res.status(200).json({
             status: 'success',
             message: 'Community deleted successfully',
-            data: null // No content to return
+            data: {} // No content to return
         });
     } catch (err) {
         res.status(500).json({
