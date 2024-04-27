@@ -27,7 +27,24 @@ const io = require('socket.io')(server, {
   }
 });
 
+
+//routers
+
 const communityRouter = require('./server/Routes/communityRoutes');
+const chatRouter = require('./server/Routes/chatlog');
+
+const UserRoutes = require('./server/Routes/userRoutes');
+
+// const UserRouter = require('./server/Routes/userRoutes')
+
+
+
+//controllers
+const {createMessage} = require('./server/controllers/chatlogs');
+
+
+
+
 
 
 // Middleware to parse JSON bodies
@@ -35,17 +52,24 @@ app.use(bodyParser.json());
 
 
 app.use('/api/v1/community', communityRouter);
+app.use('/api/v1/user', UserRoutes);
+app.use('/api/v1/chats', chatRouter);
 
 
 io.on('connection', (socket) => {
   console.log('A client connected');
 
+  
+
   // Example: Send a message to the client when they connect
+
   socket.emit('message', 'Welcome to the server!');
 
   // Example: Listen for messages from the client
   socket.on('new-message', (data) => {
       console.log('Message from client:', data);
+
+      createMessage(data);
 
       // Example: Broadcast the received message to all clients
       io.emit('rcvd-message', data);
@@ -55,6 +79,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
       console.log('A client disconnected');
   });
+
 });
 
 
@@ -104,18 +129,18 @@ mongoose
 const port = process.env.PORT ||8080;
 
 // Listen on `port` and 0.0.0.0
-server.listen(port, "0.0.0.0", (req,res)=> {
-  // ...
-
-  console.log("listening");
-});
-
-// local test
-// server.listen(port, (req,res)=> {
+// server.listen(port, "0.0.0.0", (req,res)=> {
 //   // ...
 
 //   console.log("listening");
 // });
+
+// local test
+server.listen(port, (req,res)=> {
+  // ...
+
+  console.log(`listening on port ${port}`);
+});
 
 
 

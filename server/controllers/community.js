@@ -44,6 +44,7 @@ exports.getAllCommunities = async (req, res) => {
 exports.deleteCommunity = async (req, res) => {
     try {
         // Find the community by ID and delete it
+        console.log("dscsdv");
         const deletedCommunity = await Community.findByIdAndDelete(req.params.id);
 
         if (!deletedCommunity) {
