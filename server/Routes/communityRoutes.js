@@ -13,4 +13,7 @@ router.get('/', communityController.getAllCommunities);
 // Route for deleting a community by ID
 router.get('/delete/:id', communityController.deleteCommunity);
 
+
+router.post('/:id/join', communityController.joinCommunity);
+
 module.exports = router;

@@ -1,5 +1,3 @@
-// communityModel.js
-
 const mongoose = require('mongoose');
 
 const communitySchema = new mongoose.Schema({
@@ -11,6 +9,10 @@ const communitySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    members: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User' // Assuming 'User' is the name of your user model
+    }],
     createdAt: {
         type: Date,
         default: Date.now
