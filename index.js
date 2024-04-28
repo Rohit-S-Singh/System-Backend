@@ -52,6 +52,67 @@ app.use('/api/v1/chats', chatRouter);
 
 
 
+//testing my API
+app.get('/', (req, res) => {
+  res.send('Hey this is my backend is running 🥳') 
+})
+
+
+
+// // dbdata
+// let users = [{email:"rohit.singh0@gmail.com",password:"12345"},{email:"rohit.singh1@gmail.com",password:"12345"},{email:"rohit.singh2@gmail.com",password:"12345"}]
+
+// app.get('/auth', (req,res)=>{
+  
+  //   let email = req.body.email;
+  //   let password = req.body.password;
+  
+  //   //checking
+  //   if(users.includes({"email":email,"password":password})){
+    //     return res.json({
+//       status:200,
+//       message:"User Found",
+//       data:users[0]
+//     })
+//   }
+//   else{
+  //     return res.json({
+    //       status:400,
+    //       message:"User not Found",
+    //       data:null
+    //     })
+    //   }
+    // })
+    
+    // db connection
+    
+    const { createClient } = require('redis');
+    
+    
+    const client = createClient({
+      password: "I0Rl8BcPLKY5Ym45WMOZE7iYDyO8pa5E",
+      socket: {
+        host: 'redis-19032.c240.us-east-1-3.ec2.redns.redis-cloud.com',
+        port: 19032
+      }
+  });
+
+    const checkRedis = async ()=>{
+      try{
+        await client.connect();
+        await client.set('key', 'value');
+        const value = await client.get('key');
+        await client.disconnect();
+      }  
+      catch(err){
+        console.log(err);
+      }  
+    }  
+    
+    checkRedis();
+
+
+
 // setting socket 
 io.on('connection', (socket) => {
   console.log('A client connected');
@@ -72,6 +133,23 @@ io.on('connection', (socket) => {
       io.emit('rcvd-message', data);
   });
 
+
+  socket.on('typingStatuss', ({ UserName, isTyping }) => {
+    // Store typing status in Redis
+    const key = `typing:${UserName}`;
+    // if (isTyping) {
+    //   redisClient.set(key, 'true');
+    // } else {
+    //   redisClient.del(key);
+    // }
+
+    console.log("typing");
+
+    // Broadcast typing status to other connected clients
+    io.emit('typingStatus', { UserName, isTyping });
+  });
+
+
   // Example: Listen for disconnect events
   socket.on('disconnect', () => {
       console.log('A client disconnected');
@@ -79,74 +157,6 @@ io.on('connection', (socket) => {
 
 });
 
-
-//testing my API
-app.get('/', (req, res) => {
-  res.send('Hey this is my backend is running 🥳') 
-})
-
-
-
-// // dbdata
-// let users = [{email:"rohit.singh0@gmail.com",password:"12345"},{email:"rohit.singh1@gmail.com",password:"12345"},{email:"rohit.singh2@gmail.com",password:"12345"}]
-
-// app.get('/auth', (req,res)=>{
-
-//   let email = req.body.email;
-//   let password = req.body.password;
-
-//   //checking
-//   if(users.includes({"email":email,"password":password})){
-//     return res.json({
-//       status:200,
-//       message:"User Found",
-//       data:users[0]
-//     })
-//   }
-//   else{
-//     return res.json({
-//       status:400,
-//       message:"User not Found",
-//       data:null
-//     })
-//   }
-// })
-
-// db connection
-
-const { createClient } = require('redis');
-
-
-const client = createClient({
-  password: "I0Rl8BcPLKY5Ym45WMOZE7iYDyO8pa5E",
-  socket: {
-      host: 'redis-19032.c240.us-east-1-3.ec2.redns.redis-cloud.com',
-      port: 19032
-  }
-});
-
-
-const checkRedis = async ()=>{
-  try{
-    await client.connect();
-    await client.set('key', 'value');
-    const value = await client.get('key');
-    await client.disconnect();
-  }
-  catch(err){
-    console.log(err);
-  }
-  
-}
-
-
-
-checkRedis();
-// checkRedis();
-
-
-// redis[s]://[[username][:password]@][host][:port][/db-number]:
-// 
 
 
 
