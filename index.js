@@ -1,17 +1,15 @@
 const express = require('express')
 
-const app = express()
-// const PORT = 9000
+const redis  = require('redis');
 
+const app = express()
 const http = require('http');
-// const socketIo = require('socket.io');
 
 const mongoose = require("mongoose");
 const server = http.createServer(app);
-// const io = socketIo(server);
 
 
-const bodyParser = require('body-parser'); // Import body-parser
+const bodyParser = require('body-parser'); //body-parser
 
 app.use(function(req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -29,13 +27,10 @@ const io = require('socket.io')(server, {
 
 
 //routers
-
 const communityRouter = require('./server/Routes/communityRoutes');
 const chatRouter = require('./server/Routes/chatlog');
-
 const UserRoutes = require('./server/Routes/userRoutes');
 
-// const UserRouter = require('./server/Routes/userRoutes')
 
 
 
@@ -45,17 +40,19 @@ const {createMessage} = require('./server/controllers/chatlogs');
 
 
 
-
-
 // Middleware to parse JSON bodies
 app.use(bodyParser.json());
 
 
+
+//routing
 app.use('/api/v1/community', communityRouter);
 app.use('/api/v1/user', UserRoutes);
 app.use('/api/v1/chats', chatRouter);
 
 
+
+// setting socket 
 io.on('connection', (socket) => {
   console.log('A client connected');
 
@@ -83,37 +80,74 @@ io.on('connection', (socket) => {
 });
 
 
-
+//testing my API
 app.get('/', (req, res) => {
   res.send('Hey this is my backend is running 🥳') 
 })
 
 
 
-// dbdata
-let users = [{email:"rohit.singh0@gmail.com",password:"12345"},{email:"rohit.singh1@gmail.com",password:"12345"},{email:"rohit.singh2@gmail.com",password:"12345"}]
+// // dbdata
+// let users = [{email:"rohit.singh0@gmail.com",password:"12345"},{email:"rohit.singh1@gmail.com",password:"12345"},{email:"rohit.singh2@gmail.com",password:"12345"}]
 
-app.get('/auth', (req,res)=>{
+// app.get('/auth', (req,res)=>{
 
-  let email = req.body.email;
-  let password = req.body.password;
+//   let email = req.body.email;
+//   let password = req.body.password;
 
-  //checking
-  if(users.includes({"email":email,"password":password})){
-    return res.json({
-      status:200,
-      message:"User Found",
-      data:users[0]
-    })
+//   //checking
+//   if(users.includes({"email":email,"password":password})){
+//     return res.json({
+//       status:200,
+//       message:"User Found",
+//       data:users[0]
+//     })
+//   }
+//   else{
+//     return res.json({
+//       status:400,
+//       message:"User not Found",
+//       data:null
+//     })
+//   }
+// })
+
+// db connection
+
+const { createClient } = require('redis');
+
+
+const client = createClient({
+  password: "I0Rl8BcPLKY5Ym45WMOZE7iYDyO8pa5E",
+  socket: {
+      host: 'redis-19032.c240.us-east-1-3.ec2.redns.redis-cloud.com',
+      port: 19032
   }
-  else{
-    return res.json({
-      status:400,
-      message:"User not Found",
-      data:null
-    })
+});
+
+
+const checkRedis = async ()=>{
+  try{
+    await client.connect();
+    await client.set('key', 'value');
+    const value = await client.get('key');
+    await client.disconnect();
   }
-})
+  catch(err){
+    console.log(err);
+  }
+  
+}
+
+
+
+checkRedis();
+// checkRedis();
+
+
+// redis[s]://[[username][:password]@][host][:port][/db-number]:
+// 
+
 
 
 mongoose
