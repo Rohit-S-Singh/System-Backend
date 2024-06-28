@@ -156,6 +156,37 @@ io.on('connection', (socket) => {
 
 });
 
+const loginSchema = new mongoose.Schema({
+  email: String,
+  password: String
+});
+
+const Login = mongoose.model('Login', loginSchema);
+
+
+app.post('/saveData', (req, res) => {
+  // Log the data received in the request body
+  console.log('Received data:', req.body);
+
+  // Create a new instance of Login model
+  const newLogin = new Login({
+      email: req.body.email,
+      password: req.body.password
+  });
+
+  // Save the data to MongoDB
+  newLogin.save()
+      .then(() => {
+          console.log('Data saved successfully');
+          res.send('Data received and saved successfully!');
+      })
+      .catch(err => {
+          console.error('Error saving data:', err);
+          res.status(500).send('Error saving data');
+      });
+});
+
+
 
 
 
