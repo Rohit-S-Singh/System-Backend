@@ -11,7 +11,9 @@ import User from "./models/User.js";
 dotenv.config();
 const app = express();
 const port = 8000;
-const connectionUrl = process.env.ConnectionUrl;
+const connectionUrl = "mongodb://rohitssingh17:Seeyouagain11!@ac-lo7eev6-shard-00-00.xo7hitn.mongodb.net:27017,ac-lo7eev6-shard-00-01.xo7hitn.mongodb.net:27017,ac-lo7eev6-shard-00-02.xo7hitn.mongodb.net:27017/?ssl=true&replicaSet=atlas-4oinm6-shard-0&authSource=admin&retryWrites=true&w=majority";
+
+
 
 const httpServer = createServer(app);
 
