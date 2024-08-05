@@ -5,6 +5,10 @@ import authenticateToken from '../middleware/index.js';
 const Router = express.Router();
 
 
+Router.get('/health-check',  (req, res) => {
+    console.log("ascsa");
+    res.json({ status: 200, message: "Server is working" });
+});
 Router.post('/login-user',  LoginUser)
 Router.post('/register-user', RegisterUser)
 Router.get('/get-all-users' , authenticateToken ,  getAllUsers)
