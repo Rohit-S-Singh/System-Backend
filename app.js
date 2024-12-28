@@ -71,6 +71,7 @@ io.on("connection", (socket) => {
 
 app.use('/api/', OurRouter);
 
-httpServer.listen(port, () => {
-    console.log(`App is running at http://localhost:${port}`);
+httpServer.listen(port, '0.0.0.0', () => {
+    console.log(`App is running at http://0.0.0.0:${port}`);
+    console.log(`Access locally at http://localhost:${port}`);
 });
