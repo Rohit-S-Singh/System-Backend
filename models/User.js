@@ -3,8 +3,7 @@ import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema({
     name: {
-        type: String,
-        required: [true, "Please provide a name"],
+        type: String
     },
     email: {
         type: String,
@@ -13,15 +12,22 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, "Please provide a password"],
     },
     phone: {
         type: Number,
-        required: [true, "Please provide a Phone Number"],
     },
     online: {
         type: Boolean,
         default: false,
+    },
+    accessToken: {
+        type: String,
+    },
+    refreshToken: {
+        type: String,
+    },
+    tokenExpiry: {
+        type: Date,
     }
 
 },{timestamps : true});
