@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const secretKey = "rohit123$%" ?? 'default_secret_dumbScret';
+// const secretKey = "rohit123$%" ?? 'default_secret_dumbScret';
 
 
 
