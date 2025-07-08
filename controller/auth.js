@@ -1,251 +1,263 @@
-import User from '../models/User.js'
-import { registerSchemaValidation , LoginschemaValidation } from '../validations/index.js';
-import pkg from 'bcryptjs';
-const { hash , compare } = pkg;
+import { google } from 'googleapis';
+import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import User from '../models/User.js';
+import { registerSchemaValidation, LoginschemaValidation } from '../validations/index.js';
+import pkg from 'bcryptjs';
+import EmailLog from "../models/EmailLogs.js";
+import Recruiter from '../models/Recruiter.js';
+const { hash, compare } = pkg;
+dotenv.config();
 
-import { google } from "googleapis";
+const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, JWT_SECRET } = process.env;
 
-export const LoginUser = async (req, res) => {
-    const data = req.body;
-    const { email, password } = data;
-    const { error } = LoginschemaValidation.validate({ email, password });
+const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
-    if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
+export const getAuthUrl = (req, res) => {
+  const authUrl = oAuth2Client.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: [
+      'https://www.googleapis.com/auth/gmail.send',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ],
+    redirect_uri: REDIRECT_URI,
+  });
 
-    try {
-        const checkUser = await User.findOne({ email });
-        if (!checkUser) return res.json({ success: false, message: "Account not Found" });
-
-        const isMatch = await compare(password, checkUser.password);
-        if (!isMatch) return res.json({ success: false, message: "Incorrect Password" });
-
-        const token = jwt.sign({ id: checkUser._id, email: checkUser.email }, "rohit123$%" ?? 'default_secret_dumbScret', { expiresIn: '1d' });
-
-        // const finalData = {toke n}
-        return res.json({"token":token, "username":email})
-
-    } catch (error) {
-        console.log("🚀 ~ file: index.js:28 ~ LoginUser ~ error:", error)
-        return res.json({ success: false, message: "Something Went Wrong Please Retry Later !" })
-    }
-}
-
-
-export const RegisterUser = async (req, res) => {
-    const data =  req.body;
-    const {name , email , password , phone} = data
-    const { error } = registerSchemaValidation.validate( {name , email , password , phone} );
-
-    console.log(data);
-
-    if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
-
-    try {
-        const ifExist = await User.findOne({ email });
-        
-        if (ifExist) {
-            return res.json({ success: false, message: "User Already Exist" });
-        }
-
-        else {
-            const hashedPassword = await hash(password, 12)
-            const createUser = await User.create({ email, name, password: hashedPassword , phone });
-            if(createUser) return res.json({ success: true, message: "Account created successfully" });
-        }
-    } catch (error) {
-        console.log("🚀 ~ file: index.js:55 ~ RegisterUser ~ error:", error)
-        return res.json({ success: false, message: "Something Went Wrong Please Retry Later !" })
-    }
-}
-
-export const OauthCallbackHandler = async (req, res) => {
-    const { code } = req.query;
-
-    if (!code) {
-        return res.json({ success: false, message: "Authorization code not provided" });
-    }
-
-    try {
-        // Prepare URL-encoded params for token exchange
-        const params = new URLSearchParams();
-        params.append('client_id', process.env.CLIENT_ID);
-        params.append('client_secret', process.env.CLIENT_SECRET);
-        params.append('code', code);
-        params.append('redirect_uri', process.env.REDIRECT_URI);
-        params.append('grant_type', 'authorization_code');
-
-        // Exchange authorization code for access token
-        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params.toString(),
-        });
-
-        const tokenData = await tokenResponse.json();
-
-        if (!tokenResponse.ok) {
-            return res.json({
-                success: false,
-                message: "Failed to exchange authorization code for token",
-                error: tokenData,
-            });
-        }
-
-        const { access_token, refresh_token, expires_in } = tokenData;
-
-        // Fetch user info using access token
-        const userResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${access_token}` },
-        });
-
-        const userData = await userResponse.json();
-
-        if (!userResponse.ok) {
-            return res.json({
-                success: false,
-                message: "Failed to fetch user information",
-                error: userData,
-            });
-        }
-
-        // Check if user already exists in DB
-        let user = await User.findOne({ email: userData.email });
-
-        if (!user) {
-            user = await User.create({
-                name: userData.name,
-                email: userData.email,
-                oauthProvider: 'google',
-                accessToken: access_token,
-                refreshToken: refresh_token,
-                tokenExpiry: Date.now() + expires_in * 1000, // Store token expiry time
-            });
-        } else {
-            // Update token data for existing user
-            user.accessToken = access_token;
-            user.refreshToken = refresh_token;
-            user.tokenExpiry = Date.now() + expires_in * 1000;
-            await user.save();
-        }
-
-        // Generate JWT token
-        const token = jwt.sign(
-            { id: user._id, email: user.email },
-            process.env.JWT_SECRET || 'default_secret',
-            { expiresIn: '1d' }
-        );
-
-        return res.json({
-            success: true,
-            token,
-            user: {
-                name: user.name,
-                email: user.email,
-            },
-        });
-    } catch (error) {
-        console.error("OauthCallbackHandler error:", error);
-        return res.json({
-            success: false,
-            message: "Something went wrong. Please try again later.",
-        });
-    }
+  res.json({ url: authUrl });
 };
 
-export const sendEmail = async (req, res) => {
-    const { to, subject, body, from } = req.body;
-  
-    try {
-      const user = await User.findOne({ email: from });
-  
-      if (!user || !user.refreshToken) {
-        return res.status(401).json({ success: false, message: "Email not connected" });
-      }
-  
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.CLIENT_ID,
-      process.env.CLIENT_SECRET,
-      process.env.REDIRECT_URI
-    );
-      oAuth2Client.setCredentials({
-        access_token: user.accessToken,
-        refresh_token: user.refreshToken,
-        expiry_date: new Date(user.tokenExpiry).getTime(),
-      });
-  
-      // Automatically refresh token if needed
-      oAuth2Client.on('tokens', async (tokens) => {
-        if (tokens.refresh_token) {
-          user.refreshToken = tokens.refresh_token;
-        }
-        if (tokens.access_token) {
-          user.accessToken = tokens.access_token;
-          user.tokenExpiry = new Date(Date.now() + tokens.expiry_date);
-        }
-        await user.save();
-      });
-  
-      const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
-      const to = "ddaarrkhorse@gmail.com"
-  
-      const message = [
-        `To: ${to}`,
-        `Subject: ${subject}`,
-        "Content-Type: text/plain; charset=utf-8",
-        "",
-        body,
-      ].join("\n");
-  
-      const encodedMessage = Buffer.from(message)
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-  
-      await gmail.users.messages.send({
-        userId: "me",
-        requestBody: {
-          raw: encodedMessage,
-        },
-      });
-  
-      return res.json({ success: true, message: "Email sent successfully" });
-  
-    } catch (err) {
-      console.error("Email sending failed:", err);
-      return res.status(500).json({ success: false, message: "Failed to send email" });
-    }
-  };
-  
+export const oauthCallback = async (req, res) => {
+  const { code } = req.query;
 
+  if (!code) return res.status(400).json({ message: "Code not provided" });
+
+  try {
+    const { tokens } = await oAuth2Client.getToken({ code, redirect_uri: REDIRECT_URI });
+    oAuth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({ version: "v2", auth: oAuth2Client });
+    const { data } = await oauth2.userinfo.get();
+    const email = data.email;
+
+    let user = await User.findOne({ email });
+    if (!user) user = new User({ email });
+
+    user.accessToken = tokens.access_token;
+    user.refreshToken = tokens.refresh_token;
+    user.tokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
+
+    await user.save();
+
+    return res.send("✅ Gmail connected successfully!");
+  } catch (err) {
+    console.error("Callback error:", err.response?.data || err.message);
+    return res.status(500).json({ message: "OAuth callback failed" });
+  }
+};
+
+import fs from "fs";
+import path from "path";
+
+export const sendEmail = async (req, res) => {
+  const { to, subject, body, from } = req.body;
+  const attachment = req.file;
+
+  try {
+    const user = await User.findOne({ email: from });
+    if (!user || !user.refreshToken) {
+      return res.status(401).json({ success: false, message: "Email not connected" });
+    }
+
+    const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+    oAuth2Client.setCredentials({
+      access_token: user.accessToken,
+      refresh_token: user.refreshToken,
+    });
+
+    const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
+
+    const boundary = "boundary_" + Date.now();
+    const attachmentBase64 = attachment.buffer.toString("base64");
+
+    const messageParts = [
+      `From: ${from}`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      "",
+      `--${boundary}`,
+      `Content-Type: text/html; charset="UTF-8"`,
+      `Content-Transfer-Encoding: 7bit`,
+      "",
+      body,
+      "",
+      `--${boundary}`,
+      `Content-Type: ${attachment.mimetype}; name="${attachment.originalname}"`,
+      "Content-Transfer-Encoding: base64",
+      `Content-Disposition: attachment; filename="${attachment.originalname}"`,
+      "",
+      attachmentBase64,
+      `--${boundary}--`,
+    ];
+
+    const rawMessage = Buffer.from(messageParts.join("\n"))
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    await gmail.users.messages.send({
+      userId: "me",
+      requestBody: { raw: rawMessage },
+    });
+    const recruiter = await Recruiter.findOne({ email: to }).lean();
+    if (!recruiter) {
+      return res.status(404).json({ success: false, message: "Recruiter not found" });
+    }
+    await EmailLog.create({
+      sentBy: from,
+      sentTo: to,
+      recruiterId: recruiter._id,
+      subject,
+      body,
+      attachmentName: attachment?.originalname || null,
+      status: "Sent",
+    });
+
+    return res.json({ success: true, message: "Email sent successfully with attachment" });
+  } catch (error) {
+    console.error("Email sending failed:", error);
+    return res.status(500).json({ success: false, message: "Failed to send email" });
+  }
+};
+
+
+export const getEmailLogs =  async (req, res) => {
+  const { userEmail, recruiterId } = req.query;
+  try {
+    const logs = await EmailLog.find({ sentBy:userEmail, recruiterId }).lean();
+
+    if (!logs.length) {
+      return res.status(404).json({ success: false, message: "No email logs found." });
+    }
+
+    res.json({ success: true, logs });
+  } catch (err) {
+    console.error("Failed to fetch email logs:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 export const CheckEmailConnection = async (req, res) => {
-    const { email, accessToken } = req.body;
+  const { email } = req.body;
 
-    if (!email) {
-        return res.json({ success: false, message: "Email is required" });
+  if (!email) return res.json({ success: false, message: "Email is required" });
+
+  try {
+    const user = await User.findOne({ email }).lean();
+    if (user?.accessToken) {
+      return res.json({ success: true, connected: true, user });
+    }
+    return res.json({ success: false, message: "Email not connected" });
+  } catch (error) {
+    console.error("CheckEmailConnection error:", error);
+    return res.status(500).json({ success: false, message: "Something went wrong." });
+  }
+};
+
+export const GoogleAuthHandler = async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ success: false, message: "Token missing" });
+
+  const client = new OAuth2Client(CLIENT_ID);
+
+  try {
+    const ticket = await client.verifyIdToken({ idToken: token, audience: CLIENT_ID });
+    const payload = ticket.getPayload();
+
+    let user = await User.findOne({ email: payload.email });
+    if (!user) {
+      user = await User.create({ email: payload.email, name: payload.name, oauthProvider: "google" });
     }
 
-    try {
-        const user = await User.findOne({ email }).lean();
+    const jwtToken = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: "1d" });
 
-        if (user) {
-            if (user?.accessToken) {
-                const accessToken = user.accessToken;
-                // const isValidToken = jwt.verify(accessToken, process.env.JWT_SECRET || 'default_secret', (err) => !err);
-                // if (isVa÷lidToken) {
-                    return res.json({ success: true, user, message: "Email is connected to an account with a valid access token" });
-                // } else {
-                //   ÷  return res.json({ success: false, message: "Invalid access token" });
-                // }÷
-            }
-            return res.json({ success: false, message: "Email is not connected to an account" });
-        } else {
-            return res.json({ success: false, message: "Email is not connected to any account" });
-        }
-    } catch (error) {
-        console.error("CheckEmailConnection error:", error);
-        return res.json({ success: false, message: "Something went wrong. Please try again later." });
+    res.json({
+      success: true,
+      token: jwtToken,
+      email: user.email,
+      username: user.name,
+    });
+  } catch (err) {
+    console.error("Error verifying Google token", err);
+    res.status(401).json({ success: false, message: "Invalid Google token" });
+  }
+};
+
+export const RegisterUser = async (req, res) => {
+  const { name, email, password, phone } = req.body;
+  const { error } = registerSchemaValidation.validate({ name, email, password, phone });
+
+  if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
+
+  try {
+    const ifExist = await User.findOne({ email });
+    if (ifExist) return res.json({ success: false, message: "User Already Exists" });
+
+    const hashedPassword = await hash(password, 12);
+    await User.create({ email, name, password: hashedPassword, phone });
+
+    return res.json({ success: true, message: "Account created successfully" });
+  } catch (error) {
+    console.error("RegisterUser error:", error);
+    return res.json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const LoginUser = async (req, res) => {
+  const { email, password } = req.body;
+  const { error } = LoginschemaValidation.validate({ email, password });
+
+  if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
+
+  try {
+    const checkUser = await User.findOne({ email });
+    if (!checkUser) return res.json({ success: false, message: "Account not found" });
+
+    const isMatch = await compare(password, checkUser.password);
+    if (!isMatch) return res.json({ success: false, message: "Incorrect password" });
+
+    const token = jwt.sign({ id: checkUser._id, email: checkUser.email }, JWT_SECRET, { expiresIn: '1d' });
+
+    return res.json({ token, username: email });
+  } catch (error) {
+    console.error("LoginUser error:", error);
+    return res.json({ success: false, message: "Something went wrong" });
+  }
+};
+
+
+export const getAllLogsByUser = async (req, res) => {
+  const { userEmail } = req.query;
+
+  if (!userEmail) {
+    return res.status(400).json({ success: false, message: "User email is required" });
+  }
+
+  try {
+    const logs = await EmailLog.find({ sentBy: userEmail }).lean();
+
+    if (!logs.length) {
+      return res.status(404).json({ success: false, message: "No logs found for this user." });
     }
+
+    res.json({ success: true, logs });
+  } catch (error) {
+    console.error("Error fetching logs by user:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 };
