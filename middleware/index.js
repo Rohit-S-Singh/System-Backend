@@ -2,10 +2,6 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// const secretKey = "rohit123$%" ?? 'default_secret_dumbScret';
-
-
-
 const authenticateToken = (req, res, next) => {
     const token = req.headers['authorization'].split(' ')[1];
   try {
