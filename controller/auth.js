@@ -137,9 +137,12 @@ export const sendEmail = async (req, res) => {
 
 
 export const getEmailLogs =  async (req, res) => {
-  const { userEmail, recruiterId } = req.query;
+  let { userEmail, recruiterId } = req.query;
+  // Optional, not required in Express:
+  userEmail = decodeURIComponent(userEmail);
+
   try {
-    const logs = await EmailLog.find({ sentBy:userEmail, recruiterId }).lean();
+    const logs = await EmailLog.find({ sentBy: userEmail, recruiterId }).lean();
 
     if (!logs.length) {
       return res.status(404).json({ success: false, message: "No email logs found." });
@@ -151,7 +154,6 @@ export const getEmailLogs =  async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 export const CheckEmailConnection = async (req, res) => {
   const { email } = req.body;
 
@@ -259,5 +261,50 @@ export const getAllLogsByUser = async (req, res) => {
   } catch (error) {
     console.error("Error fetching logs by user:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+export const saveTemplateByEmail = async (req, res) => {
+  try {
+    const { email, rawTemplate, placeholders, finalHtml } = req.body;
+
+    if (!email || !finalHtml) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.htmlEmailTemplate = {
+      finalHtml,
+    };
+
+    await user.save();
+
+    res.status(200).json({ message: "Template saved successfully", htmlEmailTemplate: user.htmlEmailTemplate });
+  } catch (err) {
+    console.error("Error saving template:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const fetchTemplateByEmail = async (req, res) => {
+  const { email } = req.query;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email is required" });
+  }
+
+  try {
+    const user = await User.findOne({ email }).lean();
+    if (!user || !user.htmlEmailTemplate) {
+      return res.status(404).json({ success: false, message: "Template not found for this user" });
+    }
+
+    res.status(200).json({ success: true, htmlEmailTemplate: user.htmlEmailTemplate });
+  } catch (err) {
+    console.error("Error fetching template by email:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

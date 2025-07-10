@@ -8,7 +8,9 @@ import {
   CheckEmailConnection,
   sendEmail,
   getEmailLogs,
-  getAllLogsByUser
+  getAllLogsByUser,
+  fetchTemplateByEmail,
+  saveTemplateByEmail
 } from '../controller/auth.js';
 
 import {
@@ -57,6 +59,8 @@ Router.post('/send-group-message', authenticateToken, sendGroupMessage);
 Router.get('/get-group-chat', authenticateToken, getGroupChat);
 Router.delete('/delete-group', authenticateToken, deleteGroup);
 Router.delete('/delete-group-message-from-me', authenticateToken, deleteMessageFromMe);
+Router.post("/save-html-template",saveTemplateByEmail);
+Router.get("/get-html-template",fetchTemplateByEmail);
 
 Router.get("/email-logs/", getEmailLogs);
 
