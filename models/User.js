@@ -42,6 +42,11 @@ const UserSchema = new mongoose.Schema({
     },
   },
 
+followupTemplate: {
+    type: [String],
+},
+  
+
 }, { timestamps: true });
 
 const User = mongoose.models.users || mongoose.model("users", UserSchema);

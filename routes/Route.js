@@ -26,6 +26,8 @@ import {
   deleteGroup
 } from '../controller/chat.js';
 
+import { saveFollowUpTemplate, fetchFollowUpTemplate } from '../controller/Email-Sender.js';
+
 import authenticateToken from '../middleware/index.js';
 import recruiterRoutes from './Recruiter.js'; // ✅ Import recruiter routes
 
@@ -63,6 +65,8 @@ Router.delete('/delete-group-message-from-me', authenticateToken, deleteMessageF
 Router.post("/save-html-template",saveTemplateByEmail);
 Router.get("/get-html-template",fetchTemplateByEmail);
 Router.get("/email-journey", getEmailThreadLogs); // Ensure this route is protected
+Router.post('/save-followup-template', saveFollowUpTemplate);
+Router.get('/fetch-followup-templates/:email', fetchFollowUpTemplate);
 
 Router.get("/email-logs/", getEmailLogs);
 
