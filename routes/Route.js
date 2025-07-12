@@ -10,7 +10,8 @@ import {
   getEmailLogs,
   getAllLogsByUser,
   fetchTemplateByEmail,
-  saveTemplateByEmail
+  saveTemplateByEmail,
+  getEmailThreadLogs
 } from '../controller/auth.js';
 
 import {
@@ -61,6 +62,7 @@ Router.delete('/delete-group', authenticateToken, deleteGroup);
 Router.delete('/delete-group-message-from-me', authenticateToken, deleteMessageFromMe);
 Router.post("/save-html-template",saveTemplateByEmail);
 Router.get("/get-html-template",fetchTemplateByEmail);
+Router.get("/email-journey", getEmailThreadLogs); // Ensure this route is protected
 
 Router.get("/email-logs/", getEmailLogs);
 

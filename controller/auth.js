@@ -62,7 +62,7 @@ import fs from "fs";
 import path from "path";
 
 export const sendEmail = async (req, res) => {
-  const { to, subject, body, from } = req.body;
+  const { to, subject, body, from, threadId } = req.body;
   const attachment = req.file;
 
   try {
@@ -80,8 +80,6 @@ export const sendEmail = async (req, res) => {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
     const boundary = "boundary_" + Date.now();
-    const attachmentBase64 = attachment.buffer.toString("base64");
-
     const messageParts = [
       `From: ${from}`,
       `To: ${to}`,
@@ -94,15 +92,22 @@ export const sendEmail = async (req, res) => {
       `Content-Transfer-Encoding: 7bit`,
       "",
       body,
-      "",
-      `--${boundary}`,
-      `Content-Type: ${attachment.mimetype}; name="${attachment.originalname}"`,
-      "Content-Transfer-Encoding: base64",
-      `Content-Disposition: attachment; filename="${attachment.originalname}"`,
-      "",
-      attachmentBase64,
-      `--${boundary}--`,
     ];
+
+    if (attachment) {
+      const attachmentBase64 = attachment.buffer.toString("base64");
+      messageParts.push(
+        "",
+        `--${boundary}`,
+        `Content-Type: ${attachment.mimetype}; name="${attachment.originalname}"`,
+        "Content-Transfer-Encoding: base64",
+        `Content-Disposition: attachment; filename="${attachment.originalname}"`,
+        "",
+        attachmentBase64
+      );
+    }
+
+    messageParts.push(`--${boundary}--`);
 
     const rawMessage = Buffer.from(messageParts.join("\n"))
       .toString("base64")
@@ -110,14 +115,26 @@ export const sendEmail = async (req, res) => {
       .replace(/\//g, "_")
       .replace(/=+$/, "");
 
-    await gmail.users.messages.send({
+    const gmailRequest = {
       userId: "me",
-      requestBody: { raw: rawMessage },
-    });
+      requestBody: {
+        raw: rawMessage,
+      },
+    };
+
+    if (threadId) {
+      gmailRequest.requestBody.threadId = threadId;
+    }
+
+    const response = await gmail.users.messages.send(gmailRequest);
+
     const recruiter = await Recruiter.findOne({ email: to }).lean();
     if (!recruiter) {
       return res.status(404).json({ success: false, message: "Recruiter not found" });
     }
+
+    const threadIdToSave = response.data.threadId;
+
     await EmailLog.create({
       sentBy: from,
       sentTo: to,
@@ -125,10 +142,15 @@ export const sendEmail = async (req, res) => {
       subject,
       body,
       attachmentName: attachment?.originalname || null,
-      status: "Sent",
+      status: threadId == null ? "thread_start" : 'follow_up',
+      threadId: threadIdToSave,
     });
 
-    return res.json({ success: true, message: "Email sent successfully with attachment" });
+    return res.json({
+      success: true,
+      message: "Email sent successfully",
+      threadId: threadIdToSave,
+    });
   } catch (error) {
     console.error("Email sending failed:", error);
     return res.status(500).json({ success: false, message: "Failed to send email" });
@@ -136,7 +158,8 @@ export const sendEmail = async (req, res) => {
 };
 
 
-export const getEmailLogs =  async (req, res) => {
+
+export const getEmailLogs = async (req, res) => {
   let { userEmail, recruiterId } = req.query;
   // Optional, not required in Express:
   userEmail = decodeURIComponent(userEmail);
@@ -148,12 +171,18 @@ export const getEmailLogs =  async (req, res) => {
       return res.status(404).json({ success: false, message: "No email logs found." });
     }
 
-    res.json({ success: true, logs });
+    const logsWithThreadId = logs.map(log => ({
+      ...log,
+      threadId: log.threadId || null, // Include threadId if it exists
+    }));
+
+    res.json({ success: true, logs: logsWithThreadId });
   } catch (err) {
     console.error("Failed to fetch email logs:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 export const CheckEmailConnection = async (req, res) => {
   const { email } = req.body;
 
@@ -306,5 +335,41 @@ export const fetchTemplateByEmail = async (req, res) => {
   } catch (err) {
     console.error("Error fetching template by email:", err);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// Route handler
+export const getEmailThreadLogs = async (req, res) => {
+  const { email, threadId } = req.body; // or req.query for GET
+
+  if (!email || !threadId) {
+    return res.status(400).json({ success: false, message: "Email and threadId are required." });
+  }
+
+  try {
+    const logs = await EmailLog.find({
+      sentTo: email,
+      threadId: threadId,
+    }).sort({ createdAt: 1 }); // Sorted by time
+
+    if (!logs || logs.length === 0) {
+      return res.status(404).json({ success: false, message: "No logs found for this thread." });
+    }
+
+    const formattedLogs = logs.flatMap(log => {
+      const formattedLog = { status: log.status, createdAt: log.createdAt };
+      if (log.status === 'follow_up') {
+        return [
+          { status: 'no-reply', createdAt: null },
+          formattedLog,
+        ];
+      }
+      return [formattedLog];
+    });
+
+    return res.json({ success: true, logs: formattedLogs });
+  } catch (error) {
+    console.error("Error fetching email logs:", error);
+    return res.status(500).json({ success: false, message: "Server error while fetching logs." });
   }
 };
