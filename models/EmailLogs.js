@@ -10,9 +10,10 @@ const emailLogSchema = new mongoose.Schema(
     subject: String,
     body: String,
     attachmentName: String,
+    threadId: String, // Gmail thread ID
     status: {
       type: String,
-      enum: ["Sent", "Failed"],
+      enum: ["thread_start", "follow_up", "closed"],
       default: "Sent"
     },
     sentAt: { type: Date, default: Date.now },
