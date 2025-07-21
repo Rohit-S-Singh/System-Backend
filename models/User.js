@@ -4,6 +4,18 @@ const UserSchema = new mongoose.Schema({
   name: {
     type: String,
   },
+  givenName: {
+    type: String,
+  },
+  familyName: {
+    type: String,
+  },
+  picture: {
+    type: String,
+  },
+  locale: {
+    type: String,
+  },
   email: {
     type: String,
     required: [true, "Please provide an email"],
@@ -29,7 +41,7 @@ const UserSchema = new mongoose.Schema({
     type: Date,
   },
 
-  // ✅ New field to store HTML email template
+  // ✅ HTML email template field
   htmlEmailTemplate: {
     rawTemplate: {
       type: String,
@@ -42,11 +54,9 @@ const UserSchema = new mongoose.Schema({
     },
   },
 
-followupTemplate: {
+  followupTemplate: {
     type: [String],
-},
-  
-
+  },
 }, { timestamps: true });
 
 const User = mongoose.models.users || mongoose.model("users", UserSchema);

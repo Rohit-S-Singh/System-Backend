@@ -39,15 +39,25 @@ export const oauthCallback = async (req, res) => {
     oAuth2Client.setCredentials(tokens);
 
     const oauth2 = google.oauth2({ version: "v2", auth: oAuth2Client });
-    const { data } = await oauth2.userinfo.get();
-    const email = data.email;
+    const { data } = await oauth2.userinfo.get(); // contains profile
+
+    const { email, name, given_name, family_name, picture, locale } = data;
 
     let user = await User.findOne({ email });
-    if (!user) user = new User({ email });
+    if (!user) {
+      user = new User({ email });
+    }
 
     user.accessToken = tokens.access_token;
     user.refreshToken = tokens.refresh_token;
     user.tokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
+
+    // Optional: Store profile info
+    user.name = name;
+    user.givenName = given_name;
+    user.familyName = family_name;
+    user.picture = picture;
+    user.locale = locale;
 
     await user.save();
 
@@ -57,6 +67,7 @@ export const oauthCallback = async (req, res) => {
     return res.status(500).json({ message: "OAuth callback failed" });
   }
 };
+
 
 import fs from "fs";
 import path from "path";
