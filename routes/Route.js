@@ -32,6 +32,7 @@ import authenticateToken from '../middleware/index.js';
 import recruiterRoutes from './Recruiter.js'; // ✅ Import recruiter routes
 
 import multer from "multer";
+import jobRoutes from './JobAdmin.js'; // ✅ Import job-related routes
 const upload = multer();
 
 
@@ -72,9 +73,13 @@ Router.get("/email-logs/", getEmailLogs);
 
 // ✅ Recruiter Routes
 Router.use('/recruiters', recruiterRoutes); // e.g., POST /api/recruiters/add
+// ✅ Job Routes
+Router.use('/jobs', jobRoutes); // e.g., GET /api/jobs/list, POST /api/jobs/add
 
 
 Router.get('/getAllLogs', getAllLogsByUser); // e.g., POST /api/recruiters/add
+
+
 
 
 // ✅ Fallback
@@ -83,3 +88,6 @@ Router.use('*', (req, res) => {
 });
 
 export default Router;
+
+
+// https://system-backend-hprl.onrender.com/api/oauth2/callback
