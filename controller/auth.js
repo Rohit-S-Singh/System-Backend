@@ -221,9 +221,18 @@ export const GoogleAuthHandler = async (req, res) => {
     const ticket = await client.verifyIdToken({ idToken: token, audience: CLIENT_ID });
     const payload = ticket.getPayload();
 
-    let user = await User.findOne({ email: payload.email });
+    const { email, name, picture, locale, email_verified } = payload;
+
+    let user = await User.findOne({ email });
     if (!user) {
-      user = await User.create({ email: payload.email, name: payload.name, oauthProvider: "google" });
+      user = await User.create({
+        email,
+        name,
+        avatar: picture, // Add this field to your User schema
+        oauthProvider: "google",
+        locale, // Optional
+        emailVerified: email_verified // Optional
+      });
     }
 
     const jwtToken = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: "1d" });
@@ -233,12 +242,14 @@ export const GoogleAuthHandler = async (req, res) => {
       token: jwtToken,
       email: user.email,
       username: user.name,
+      avatar: picture, // Return avatar in response
     });
   } catch (err) {
     console.error("Error verifying Google token", err);
     res.status(401).json({ success: false, message: "Invalid Google token" });
   }
 };
+
 
 export const RegisterUser = async (req, res) => {
   const { name, email, password, phone } = req.body;
