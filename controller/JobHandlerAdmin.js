@@ -15,9 +15,6 @@ const createJob = async (req, res) => {
       referralInstructions
     } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID (postedBy) is required' });
-    }
 
     const jobData = {
       title,
