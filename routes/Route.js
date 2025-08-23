@@ -11,7 +11,8 @@ import {
   getAllLogsByUser,
   fetchTemplateByEmail,
   saveTemplateByEmail,
-  getEmailThreadLogs
+  getEmailThreadLogs,
+  setPasswordForOAuthUser
 } from '../controller/auth.js';
 
 import {
@@ -30,6 +31,10 @@ import { saveFollowUpTemplate, fetchFollowUpTemplate } from '../controller/Email
 
 import authenticateToken from '../middleware/index.js';
 import recruiterRoutes from './Recruiter.js'; // ✅ Import recruiter routes
+import networkRoutes from './Network.js'; // ✅ Import network routes
+import notificationRoutes from './Notification.js'; // ✅ Import notification routes
+import interviewRoutes from './Interview.js'; // ✅ Import interview routes
+import coinRoutes from './Coin.js'; // ✅ Import coin routes
 
 import multer from "multer";
 import jobRoutes from './JobAdmin.js'; // ✅ Import job-related routes
@@ -47,6 +52,7 @@ Router.get('/health-check', (req, res) => {
 // ✅ Auth routes
 Router.post('/login', LoginUser);
 Router.post('/register', RegisterUser);
+Router.post('/set-password', setPasswordForOAuthUser);
 Router.post('/oauth2/callback', GoogleAuthHandler);
 Router.get('/authUrl', getAuthUrl);
 Router.get('/oauth2/callback', oauthCallback);
@@ -75,6 +81,14 @@ Router.get("/email-logs/", getEmailLogs);
 Router.use('/recruiters', recruiterRoutes); // e.g., POST /api/recruiters/add
 // ✅ Job Routes
 Router.use('/jobs', jobRoutes); // e.g., GET /api/jobs/list, POST /api/jobs/add
+// ✅ Network Routes
+Router.use('/network', networkRoutes); // e.g., POST /api/network/send-request, GET /api/network/connections
+// ✅ Notification Routes
+Router.use('/notifications', notificationRoutes); // e.g., GET /api/notifications, POST /api/notifications/mark-read
+// ✅ Interview Routes
+Router.use('/interviews', interviewRoutes); // e.g., POST /api/interviews/request, GET /api/interviews/pending
+// ✅ Coin Routes
+Router.use('/coins', coinRoutes); // e.g., GET /api/coins/balance, POST /api/coins/referral
 
 
 Router.get('/getAllLogs', getAllLogsByUser); // e.g., POST /api/recruiters/add
