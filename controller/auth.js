@@ -281,12 +281,34 @@ export const LoginUser = async (req, res) => {
     const checkUser = await User.findOne({ email });
     if (!checkUser) return res.json({ success: false, message: "Account not found" });
 
+    // Check if user has a password set (OAuth users might not have password)
+    if (!checkUser.password) {
+      return res.json({ 
+        success: false, 
+        message: "Please set a password to login. You previously signed in using OAuth.",
+        requiresPasswordSetup: true,
+        email: checkUser.email
+      });
+    }
+
     const isMatch = await compare(password, checkUser.password);
     if (!isMatch) return res.json({ success: false, message: "Incorrect password" });
 
     const token = jwt.sign({ id: checkUser._id, email: checkUser.email }, JWT_SECRET, { expiresIn: '1d' });
 
-    return res.json({ token, username: email });
+    return res.json({ 
+      token, 
+      username: email,
+      id: checkUser._id,
+      user: {
+        id: checkUser._id,
+        email: checkUser.email,
+        name: checkUser.name,
+        givenName: checkUser.givenName,
+        familyName: checkUser.familyName,
+        picture: checkUser.picture
+      }
+    });
   } catch (error) {
     console.error("LoginUser error:", error);
     return res.json({ success: false, message: "Something went wrong" });
@@ -393,5 +415,73 @@ export const getEmailThreadLogs = async (req, res) => {
   } catch (error) {
     console.error("Error fetching email logs:", error);
     return res.status(500).json({ success: false, message: "Server error while fetching logs." });
+  }
+};
+
+// Set password for OAuth users
+export const setPasswordForOAuthUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Email and password are required" 
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    // Check if user already has a password
+    if (user.password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Password already set for this account" 
+      });
+    }
+
+    // Hash the new password
+    const hashedPassword = await hash(password, 12);
+    
+    // Set the password
+    user.password = hashedPassword;
+    await user.save();
+
+    // Generate JWT token for immediate login
+    const token = jwt.sign(
+      { id: user._id, email: user.email }, 
+      JWT_SECRET, 
+      { expiresIn: '1d' }
+    );
+
+    return res.json({ 
+      success: true, 
+      message: "Password set successfully. You can now login with email and password.",
+      token,
+      username: user.email,
+      id: user._id,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        givenName: user.givenName,
+        familyName: user.familyName,
+        picture: user.picture
+      }
+    });
+
+  } catch (error) {
+    console.error("Error setting password for OAuth user:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Something went wrong while setting password" 
+    });
   }
 };
