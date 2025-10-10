@@ -27,6 +27,10 @@ import {
   deleteGroup
 } from '../controller/chat.js';
 
+
+import {getAllMentors, becomeMentor} from '../controller/mentors.js'
+
+
 import { saveFollowUpTemplate, fetchFollowUpTemplate } from '../controller/Email-Sender.js';
 
 import authenticateToken from '../middleware/index.js';
@@ -95,6 +99,8 @@ Router.get('/getAllLogs', getAllLogsByUser); // e.g., POST /api/recruiters/add
 
 
 
+Router.get('/get-all-mentors', getAllMentors);
+Router.get('/become-mentor/:id', becomeMentor);
 
 // ✅ Fallback
 Router.use('*', (req, res) => {
