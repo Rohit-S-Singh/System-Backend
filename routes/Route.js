@@ -12,7 +12,8 @@ import {
   fetchTemplateByEmail,
   saveTemplateByEmail,
   getEmailThreadLogs,
-  setPasswordForOAuthUser
+  setPasswordForOAuthUser,
+  getUserByEmail
 } from '../controller/auth.js';
 
 import {
@@ -101,6 +102,13 @@ Router.get('/getAllLogs', getAllLogsByUser); // e.g., POST /api/recruiters/add
 
 Router.get('/get-all-mentors', getAllMentors);
 Router.get('/become-mentor/:id', becomeMentor);
+
+// ✅ Get user data by email
+Router.get('/get-user-by-email', getUserByEmail);
+
+
+
+Router.get('/get-html-template', fetchFollowUpTemplate)
 
 // ✅ Fallback
 Router.use('*', (req, res) => {

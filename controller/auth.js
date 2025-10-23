@@ -485,3 +485,63 @@ export const setPasswordForOAuthUser = async (req, res) => {
     });
   }
 };
+
+// Get user data by email
+export const getUserByEmail = async (req, res) => {
+  const { email } = req.query;
+
+  if (!email) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Email is required" 
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email }).select('-password -accessToken -refreshToken').lean();
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    return res.json({ 
+      success: true, 
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        givenName: user.givenName,
+        familyName: user.familyName,
+        picture: user.picture,
+        phone: user.phone,
+        online: user.online,
+        locale: user.locale,
+        connections: user.connections,
+        connectionCount: user.connectionCount,
+        pendingConnections: user.pendingConnections,
+        sentConnectionRequests: user.sentConnectionRequests,
+        notificationSettings: user.notificationSettings,
+        lastNotificationRead: user.lastNotificationRead,
+        unreadNotificationCount: user.unreadNotificationCount,
+        isMentor: user.isMentor,
+        mentorProfile: user.mentorProfile,
+        mentorStatus: user.mentorStatus,
+        hasCoinAccount: user.hasCoinAccount,
+        referralCode: user.referralCode,
+        referredBy: user.referredBy,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching user by email:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Something went wrong while fetching user data" 
+    });
+  }
+};
