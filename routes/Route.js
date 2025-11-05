@@ -43,6 +43,8 @@ import coinRoutes from './Coin.js'; // ✅ Import coin routes
 
 import multer from "multer";
 import jobRoutes from './JobAdmin.js'; // ✅ Import job-related routes
+import verifyToken from '../controller/verifyautologin.js' // ✅ Import job-related routes
+
 const upload = multer();
 
 
@@ -53,6 +55,8 @@ Router.get('/health-check', (req, res) => {
   console.log("Server health check triggered");
   res.json({ status: 200, message: "Server is working" });
 });
+Router.post('/verifyToken', verifyToken);
+
 
 // ✅ Auth routes
 Router.post('/login', LoginUser);
