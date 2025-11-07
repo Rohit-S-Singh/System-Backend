@@ -488,7 +488,7 @@ export const setPasswordForOAuthUser = async (req, res) => {
 
 // Get user data by email
 export const getUserByEmail = async (req, res) => {
-  const { email } = req.query;
+  const { email } = req.user;
 
   if (!email) {
     return res.status(400).json({ 
