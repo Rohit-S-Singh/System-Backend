@@ -108,7 +108,7 @@ Router.get('/get-all-mentors', getAllMentors);
 Router.get('/become-mentor/:id', becomeMentor);
 
 // ✅ Get user data by email
-Router.get('/get-user-by-email', getUserByEmail);
+Router.get('/get-user-by-email', authenticateToken, getUserByEmail);
 
 
 
