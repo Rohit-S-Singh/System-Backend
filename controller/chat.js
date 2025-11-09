@@ -3,7 +3,7 @@ import Chat from "../models/Chat.js";
 import { sendMessageSchemaValidation } from "../validations/index.js";
 import GroupChat from "../models/GroupChat.js";
 
-export const getAllUsers = async (req, res) => {
+export const    getAllUsers = async (req, res) => {
     const id = req.query.id;
     if (id === 'undefined' || !id) return res.status(400).json({ success: false, message: 'id is required' })
     try {
