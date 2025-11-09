@@ -44,7 +44,7 @@ import coinRoutes from './Coin.js'; // ✅ Import coin routes
 import multer from "multer";
 import jobRoutes from './JobAdmin.js'; // ✅ Import job-related routes
 import verifyToken from '../controller/verifyautologin.js' // ✅ Import job-related routes
-
+import Mentor from './Mentor.js';
 const upload = multer();
 
 
@@ -86,6 +86,8 @@ Router.get('/fetch-followup-templates/:email', fetchFollowUpTemplate);
 
 Router.get("/email-logs/", getEmailLogs);
 
+Router.use('/mentors', Mentor);
+
 // ✅ Recruiter Routes
 Router.use('/recruiters', recruiterRoutes); // e.g., POST /api/recruiters/add
 // ✅ Job Routes
@@ -104,8 +106,6 @@ Router.get('/getAllLogs', getAllLogsByUser); // e.g., POST /api/recruiters/add
 
 
 
-Router.get('/get-all-mentors', getAllMentors);
-Router.get('/become-mentor/:id', becomeMentor);
 
 // ✅ Get user data by email
 Router.get('/get-user-by-email', getUserByEmail);

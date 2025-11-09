@@ -113,36 +113,13 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  mentorProfile: {
-    expertise: [{
-      type: String
-    }],
-    experience: {
-      type: Number, // years of experience
-      default: 0
-    },
-    bio: {
-      type: String
-    },
-    hourlyRate: {
-      type: Number
-    },
-    availability: {
-      type: [{
-        day: String,
-        startTime: String,
-        endTime: String
-      }]
-    },
-    interviewTypes: [{
-      type: String,
-      enum: ['technical', 'behavioral', 'mock', 'resume_review', 'career_guidance', 'other']
-    }]
-  },
+
+  
+
   mentorStatus: {
     type: String,
-    enum: ['active', 'inactive', 'busy'],
-    default: 'inactive'
+    enum: ['Pending', 'You Are A Mentor', 'Become a Mentor'],
+    default: 'Become a Mentor'
   },
   
   // Coin-related fields
