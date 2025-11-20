@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllMentors, becomeMentor } from "../controller/mentors.js";
+import { getAllMentors, requestMentor  } from "../controller/mentors.js";
 
 const Router = express.Router();
 
@@ -7,6 +7,6 @@ const Router = express.Router();
 Router.get("/get-all-mentors", getAllMentors);
 
 // ✅ Request to become a mentor
-Router.post("/request-mentor/:id", becomeMentor);
+Router.post("/request-mentor/:email", requestMentor );
 
 export default Router;
