@@ -1,13 +1,76 @@
 
 import User from '../models/User.js';
 
-
 const getAllMentors = async (req, res) => {
-  const mentors = await User.find({ isMentor: true });
-  const result  = mentors.map((m)=>{
-    return {"profile": m.mentorProfile, avatar: m.picture || "", "name":m.name, "email": m.email , online: m.online }
-  })
-  res.json( [...result] );
+  try {
+
+
+
+   console.log("Fetching all mentors...");
+    /*  
+    ------------------------------
+    🔴 ORIGINAL CODE (TEMP HIDDEN)
+    ------------------------------
+    
+    const mentors = await User.find({ isMentor: true });
+
+    const result = mentors.map((m) => {
+      return {
+        profile: m.mentorProfile,
+        avatar: m.picture || "",
+        name: m.name,
+        email: m.email,
+        online: m.online
+      };
+    });
+
+    return res.json([...result]);
+    */
+
+    // -----------------------------------------
+    // 🟢 TEMPORARY DUMMY DATA (FOR TESTING UI)
+    // -----------------------------------------
+    const dummyMentors = [
+      {
+        profile: {
+          experience: "5 years in Web Development",
+          skills: ["React", "Node.js", "MongoDB"],
+          bio: "Passionate mentor helping students grow."
+        },
+        avatar: "https://i.pravatar.cc/150?img=1",
+        name: "John Doe",
+        email: "john@example.com",
+        online: true
+      },
+      {
+        profile: {
+          experience: "3 years in Data Science",
+          skills: ["Python", "Machine Learning", "Pandas"],
+          bio: "Loves guiding beginners in ML."
+        },
+        avatar: "https://i.pravatar.cc/150?img=2",
+        name: "Priya Sharma",
+        email: "priya@example.com",
+        online: false
+      },
+      {
+        profile: {
+          experience: "7 years in Cybersecurity",
+          skills: ["Ethical Hacking", "Networking"],
+          bio: "Cybersecurity mentor with industry expertise."
+        },
+        avatar: "https://i.pravatar.cc/150?img=3",
+        name: "Arjun Kumar",
+        email: "arjun@example.com",
+        online: true
+      }
+    ];
+
+    return res.json(dummyMentors);
+  } catch (error) {
+    console.error("Error returning mentors:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 
@@ -17,59 +80,60 @@ const getAllMentors = async (req, res) => {
 
 
 
+// POST /api/mentors/request-mentor/:email
 
-
-const becomeMentor = async (req, res) => {
+const requestMentor = async (req, res) => {
   try {
 
-console.log("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
+console.log("Full Params:", req.params);
+console.log("URL:", req.originalUrl);
 
 
-    const userId = req.params?._id// from auth or request
-    console.log(userId);
-    
-    const { profile } = req.body;
-    console.log(profile);
-    
+    console.log("Mentor request received...");
 
-    if (!profile) {
-      return res.status(400).json({ message: "Profile details are required" });
+    const email = req.params.email; // <-- email from URL
+    const mentorProfile = req.body; // <-- mentor form data
+
+    console.log("Email:", email);
+    console.log("Mentor Data:", mentorProfile);
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const user = await User.findById(userId);
+    // Find user by email
+    const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    
+    // Update mentor fields
+    user.isMentor = true;
     user.mentorStatus = "Pending";
 
-    // // Update user to become mentor
-    // user.isMentor = true;
-    // user.mentorProfile = {
-    //   expertise: profile.expertise || [],
-    //   experience: profile.experience || 0,
-    //   bio: profile.bio || "",
-    //   hourlyRate: profile.hourlyRate || 0,
-    //   availability: profile.availability || [],
-    //   interviewTypes: profile.interviewTypes || [],
-    // };
+    // (Optional) Save mentor profile if needed
+    user.mentorProfile = {
+      expertise: mentorProfile.expertise || "",
+      experienceYears: mentorProfile.experienceYears || "",
+      linkedIn: mentorProfile.linkedIn || "",
+      availability: mentorProfile.availability || "",
+      description: mentorProfile.description || "",
+    };
 
     await user.save();
 
-    res.status(200).json({
-      message: "request to become mentor submitted successfully",
-      mentor: {
-        status: user.mentorStatus,
-        // name: user.name,
-        // email: user.email,
-        // avatar: user.picture || "",
-        // profile: user.mentorProfile,
-      },
+    return res.status(200).json({
+      success: true,
+      message: "Mentor request submitted successfully",
+      mentorStatus: user.mentorStatus,
     });
   } catch (error) {
-    console.error("Error in becomeMentor:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in requestMentor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -81,4 +145,4 @@ console.log("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
 
 
 
-export { getAllMentors, becomeMentor };
+export { getAllMentors, requestMentor  };

@@ -122,6 +122,22 @@ const UserSchema = new mongoose.Schema({
     default: 'Become a Mentor'
   },
   
+  isRecruiter: {
+  type: Boolean,
+  default: false
+},
+
+recruiterProfile: {
+  companyName: String,
+  position: String,
+  experienceYears: String,
+  website: String
+},
+recruiterStatus: {
+  type: String,
+  enum: ['Pending', 'You Are A Recruiter', 'Become a Recruiter'],
+  default: 'Become a Recruiter'
+},
   // Coin-related fields
   hasCoinAccount: {
     type: Boolean,
