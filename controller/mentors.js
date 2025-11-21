@@ -1,78 +1,39 @@
 
 import User from '../models/User.js';
 
+// 📌 Controller: Get All Approved Mentors
 const getAllMentors = async (req, res) => {
   try {
 
-
-
-   console.log("Fetching all mentors...");
-    /*  
-    ------------------------------
-    🔴 ORIGINAL CODE (TEMP HIDDEN)
-    ------------------------------
+    console.log("12345666666666666666");
     
-    const mentors = await User.find({ isMentor: true });
+    // Find all users whose mentorStatus is "You Are A Mentor"
+    const mentors = await User.find(
+      { mentorStatus: "You Are A Mentor" },
+      { name: 1, email: 1, picture: 1 } // return only required fields
+    );
 
-    const result = mentors.map((m) => {
-      return {
-        profile: m.mentorProfile,
-        avatar: m.picture || "",
-        name: m.name,
-        email: m.email,
-        online: m.online
-      };
+    // Format the response
+    const result = mentors.map(m => ({
+      name: m.name,
+      email: m.email,
+      avatar: m.picture || "",
+    }));
+
+    res.status(200).json({
+      success: true,
+      total: result.length,
+      mentors: result
     });
 
-    return res.json([...result]);
-    */
-
-    // -----------------------------------------
-    // 🟢 TEMPORARY DUMMY DATA (FOR TESTING UI)
-    // -----------------------------------------
-    const dummyMentors = [
-      {
-        profile: {
-          experience: "5 years in Web Development",
-          skills: ["React", "Node.js", "MongoDB"],
-          bio: "Passionate mentor helping students grow."
-        },
-        avatar: "https://i.pravatar.cc/150?img=1",
-        name: "John Doe",
-        email: "john@example.com",
-        online: true
-      },
-      {
-        profile: {
-          experience: "3 years in Data Science",
-          skills: ["Python", "Machine Learning", "Pandas"],
-          bio: "Loves guiding beginners in ML."
-        },
-        avatar: "https://i.pravatar.cc/150?img=2",
-        name: "Priya Sharma",
-        email: "priya@example.com",
-        online: false
-      },
-      {
-        profile: {
-          experience: "7 years in Cybersecurity",
-          skills: ["Ethical Hacking", "Networking"],
-          bio: "Cybersecurity mentor with industry expertise."
-        },
-        avatar: "https://i.pravatar.cc/150?img=3",
-        name: "Arjun Kumar",
-        email: "arjun@example.com",
-        online: true
-      }
-    ];
-
-    return res.json(dummyMentors);
-  } catch (error) {
-    console.error("Error returning mentors:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
+  } catch (err) {
+    console.error("❌ Error fetching approved mentors:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server Error while fetching mentors"
+    });
   }
 };
-
 
 
 
