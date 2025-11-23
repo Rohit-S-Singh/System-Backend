@@ -5,13 +5,14 @@ import User from '../models/User.js';
 const getAllMentors = async (req, res) => {
   try {
 
-    console.log("12345666666666666666");
+  
     
     // Find all users whose mentorStatus is "You Are A Mentor"
     const mentors = await User.find(
       { mentorStatus: "You Are A Mentor" },
       { name: 1, email: 1, picture: 1 } // return only required fields
     );
+    
 
     // Format the response
     const result = mentors.map(m => ({
@@ -20,6 +21,7 @@ const getAllMentors = async (req, res) => {
       avatar: m.picture || "",
     }));
 
+
     res.status(200).json({
       success: true,
       total: result.length,
@@ -27,7 +29,6 @@ const getAllMentors = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Error fetching approved mentors:", err);
     res.status(500).json({
       success: false,
       message: "Server Error while fetching mentors"
@@ -46,17 +47,13 @@ const getAllMentors = async (req, res) => {
 const requestMentor = async (req, res) => {
   try {
 
-console.log("Full Params:", req.params);
-console.log("URL:", req.originalUrl);
 
 
-    console.log("Mentor request received...");
+
 
     const email = req.params.email; // <-- email from URL
     const mentorProfile = req.body; // <-- mentor form data
 
-    console.log("Email:", email);
-    console.log("Mentor Data:", mentorProfile);
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
