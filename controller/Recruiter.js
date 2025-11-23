@@ -3,14 +3,11 @@ import User from '../models/User.js'; // assuming you have a User model
 
 export const requestRecruiter = async (req, res) => {
   try {
-    console.log("Recruiter request received...");
-    console.log("Route Params:", req.params);
+ 
 
     const email = req.params.email;   // email from param
     const recruiterData = req.body;   // recruiter form data
 
-    console.log("Email from param:", email);
-    console.log("Recruiter Data:", recruiterData);
 
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required" });
