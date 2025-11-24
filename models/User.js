@@ -122,6 +122,22 @@ const UserSchema = new mongoose.Schema({
     default: 'Become a Mentor'
   },
   
+  isRecruiter: {
+  type: Boolean,
+  default: false
+},
+
+recruiterProfile: {
+  companyName: String,
+  position: String,
+  experienceYears: String,
+  website: String
+},
+recruiterStatus: {
+  type: String,
+  enum: ['Pending', 'You Are A Recruiter', 'Become a Recruiter'],
+  default: 'Become a Recruiter'
+},
   // Coin-related fields
   hasCoinAccount: {
     type: Boolean,
@@ -132,6 +148,71 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  // ----------------------------------------------------
+  // 🆕 USER CATEGORY SYSTEM (Student / Professional)
+  // ----------------------------------------------------
+  userType: {
+    type: String,
+    enum: ["student", "professional", null],
+    default: null,
+  },
+
+  // ------------------ STUDENT DETAILS ------------------
+  studentDetails: {
+    college: { type: String },
+    collegeWebsite: { type: String },
+    university: { type: String },
+    degree: { type: String },
+    branch: { type: String },
+    year: { type: String },
+    graduationYear: { type: String },
+
+    currentCGPA: { type: String },
+    tenthPercentage: { type: String },
+    twelfthPercentage: { type: String },
+
+    skills: { type: [String] },
+
+    resumeLink: { type: String },
+    portfolioLink: { type: String },
+    github: { type: String },
+    leetcode: { type: String },
+    codeforces: { type: String },
+
+    careerInterest: { type: String },         // e.g., Software, Data Science, Core Engineering
+    preferredJobRole: { type: String },       // e.g., MERN Developer
+    preferredLocations: { type: [String] },   // e.g., ["Bangalore", "Hyderabad"]
+  },
+
+  // ---------------- PROFESSIONAL DETAILS ----------------
+  professionalDetails: {
+    company: { type: String },
+    companyWebsite: { type: String },
+
+    jobTitle: { type: String },
+    department: { type: String }, // e.g., Engineering / Marketing
+    experience: { type: String }, // e.g., "2 years"
+
+    currentCTC: { type: String },
+    expectedCTC: { type: String },
+    noticePeriod: { type: String }, // e.g., "30 days"
+
+    skills: { type: [String] },
+
+    resumeLink: { type: String },
+    portfolioLink: { type: String },
+    github: { type: String },
+    linkedin: { type: String },
+
+    careerLevel: { type: String, enum: ["Intern", "Entry", "Mid", "Senior"] },
+    workMode: { type: String, enum: ["Remote", "Hybrid", "Onsite"] },
+
+    preferredJobRole: { type: String },
+    preferredLocations: { type: [String] },
+  },
+
+
+
   referredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'users'

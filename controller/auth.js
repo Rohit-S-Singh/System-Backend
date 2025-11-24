@@ -212,6 +212,8 @@ export const CheckEmailConnection = async (req, res) => {
 };
 
 export const GoogleAuthHandler = async (req, res) => {
+  console.log("checking google");
+  
   const { token } = req.body;
   if (!token) return res.status(400).json({ success: false, message: "Token missing" });
 
@@ -219,16 +221,14 @@ export const GoogleAuthHandler = async (req, res) => {
 
   try {
     const ticket = await client.verifyIdToken({ idToken: token, audience: CLIENT_ID });
-    const payload = ticket.getPayload();
-
+    const payload = ticket.getPayload();    
     const { email, name, picture, locale, email_verified } = payload;
-
     let user = await User.findOne({ email });
     if (!user) {
       user = await User.create({
         email,
         name,
-        avatar: picture, // Add this field to your User schema
+        picture: picture, // Add this field to your User schema
         oauthProvider: "google",
         locale, // Optional
         emailVerified: email_verified // Optional

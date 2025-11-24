@@ -1,13 +1,39 @@
 
 import User from '../models/User.js';
 
-
+// 📌 Controller: Get All Approved Mentors
 const getAllMentors = async (req, res) => {
-  const mentors = await User.find({ isMentor: true });
-  const result  = mentors.map((m)=>{
-    return {"profile": m.mentorProfile, avatar: m.picture || "", "name":m.name, "email": m.email , online: m.online }
-  })
-  res.json( [...result] );
+  try {
+
+  
+    
+    // Find all users whose mentorStatus is "You Are A Mentor"
+    const mentors = await User.find(
+      { mentorStatus: "You Are A Mentor" },
+      { name: 1, email: 1, picture: 1 } // return only required fields
+    );
+    
+
+    // Format the response
+    const result = mentors.map(m => ({
+      name: m.name,
+      email: m.email,
+      avatar: m.picture || "",
+    }));
+
+
+    res.status(200).json({
+      success: true,
+      total: result.length,
+      mentors: result
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error while fetching mentors"
+    });
+  }
 };
 
 
@@ -16,60 +42,56 @@ const getAllMentors = async (req, res) => {
 
 
 
+// POST /api/mentors/request-mentor/:email
 
-
-
-const becomeMentor = async (req, res) => {
+const requestMentor = async (req, res) => {
   try {
 
-console.log("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
 
 
-    const userId = req.params?._id// from auth or request
-    console.log(userId);
-    
-    const { profile } = req.body;
-    console.log(profile);
-    
 
-    if (!profile) {
-      return res.status(400).json({ message: "Profile details are required" });
+
+    const email = req.params.email; // <-- email from URL
+    const mentorProfile = req.body; // <-- mentor form data
+
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const user = await User.findById(userId);
+    // Find user by email
+    const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    
+    // Update mentor fields
+    user.isMentor = true;
     user.mentorStatus = "Pending";
 
-    // // Update user to become mentor
-    // user.isMentor = true;
-    // user.mentorProfile = {
-    //   expertise: profile.expertise || [],
-    //   experience: profile.experience || 0,
-    //   bio: profile.bio || "",
-    //   hourlyRate: profile.hourlyRate || 0,
-    //   availability: profile.availability || [],
-    //   interviewTypes: profile.interviewTypes || [],
-    // };
+    // (Optional) Save mentor profile if needed
+    user.mentorProfile = {
+      expertise: mentorProfile.expertise || "",
+      experienceYears: mentorProfile.experienceYears || "",
+      linkedIn: mentorProfile.linkedIn || "",
+      availability: mentorProfile.availability || "",
+      description: mentorProfile.description || "",
+    };
 
     await user.save();
 
-    res.status(200).json({
-      message: "request to become mentor submitted successfully",
-      mentor: {
-        status: user.mentorStatus,
-        // name: user.name,
-        // email: user.email,
-        // avatar: user.picture || "",
-        // profile: user.mentorProfile,
-      },
+    return res.status(200).json({
+      success: true,
+      message: "Mentor request submitted successfully",
+      mentorStatus: user.mentorStatus,
     });
   } catch (error) {
-    console.error("Error in becomeMentor:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in requestMentor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
@@ -81,4 +103,4 @@ console.log("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
 
 
 
-export { getAllMentors, becomeMentor };
+export { getAllMentors, requestMentor  };

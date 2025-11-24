@@ -14,7 +14,7 @@ const verifyToken = async (req, res) => {
     if (!authHeader) {
       return res
         .status(401)
-        .json({ success: false, message: "Please login. No token provided!" });
+        .json({ success: false, message: "Please login. No token provided! 1234567"});
     }
 
     const token = authHeader.split(" ")[1];
@@ -29,7 +29,7 @@ const verifyToken = async (req, res) => {
     // ✅ Verify token
     jwt.verify(token, secretKey, async (err, decoded) => {
       if (err) {
-        console.error("❌ Token verification failed:", err);
+        console.error("❌ Token verification failed:123456789", err);
         return res
           .status(403)
           .json({ success: false, message: "Invalid or expired token!" });
@@ -42,6 +42,13 @@ const verifyToken = async (req, res) => {
         const user = await User.findOne({ email: decoded.email }).select(
           "-password" // optional: exclude password
         );
+        console.log("checking user ",user);
+
+        console.log("**********************************************************************************");
+        console.log(user.picture);
+        
+        
+        
 
         if (!user) {
           return res.status(404).json({
@@ -49,7 +56,8 @@ const verifyToken = async (req, res) => {
             message: "User not found in database",
           });
         }
-
+       console.log("*****************************************************");
+       
         console.log(user);
         
 

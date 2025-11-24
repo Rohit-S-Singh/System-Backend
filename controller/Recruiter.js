@@ -1,31 +1,57 @@
 import Recruiter from '../models/Recruiter.js';
 import User from '../models/User.js'; // assuming you have a User model
 
-export const addRecruiter = async (req, res) => {
-  const { name, email: recruiterEmail, userEmail } = req.body;
-
-  if (!name || !recruiterEmail || !userEmail) {
-    return res.status(400).json({ success: false, message: "Name, recruiter email, and user email are required" });
-  }
-
+export const requestRecruiter = async (req, res) => {
   try {
-    const user = await User.findOne({ email: userEmail });
+ 
+
+    const email = req.params.email;   // email from param
+    const recruiterData = req.body;   // recruiter form data
+
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    // Find the user by email
+    const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    const recruiter = await Recruiter.create({
-      name,
-      email: recruiterEmail,
-      addedBy: user._id,
+    // Update recruiter flags
+    user.isRecruiter = true;
+    user.recruiterStatus = "Pending";
+
+    // Store recruiter profile
+    user.recruiterProfile = {
+      companyName: recruiterData.companyName || "",
+      position: recruiterData.position || "",
+      experienceYears: recruiterData.experienceYears || "",
+      website: recruiterData.website || "",
+    };
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Recruiter request submitted successfully",
+      recruiterStatus: user.recruiterStatus,
     });
 
-    res.status(201).json({ success: true, recruiter });
   } catch (err) {
-    console.error("Error adding recruiter:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("Error in requestRecruiter:", err);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+
+
+
+
+
+
 
 export const getUserRecruiters = async (req, res) => {
   const userEmail = req.query?.userEmail;

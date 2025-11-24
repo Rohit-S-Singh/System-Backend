@@ -29,7 +29,7 @@ import {
 } from '../controller/chat.js';
 
 
-import {getAllMentors, becomeMentor} from '../controller/mentors.js'
+import {getAllMentors, requestMentor} from '../controller/mentors.js'
 
 
 import { saveFollowUpTemplate, fetchFollowUpTemplate } from '../controller/Email-Sender.js';
@@ -40,11 +40,12 @@ import networkRoutes from './Network.js'; // ✅ Import network routes
 import notificationRoutes from './Notification.js'; // ✅ Import notification routes
 import interviewRoutes from './Interview.js'; // ✅ Import interview routes
 import coinRoutes from './Coin.js'; // ✅ Import coin routes
-
+import {getPendingRequests ,handleRequestAction} from '../controller/requestHandlerFromAdminRoutes.js';
 import multer from "multer";
 import jobRoutes from './JobAdmin.js'; // ✅ Import job-related routes
 import verifyToken from '../controller/verifyautologin.js' // ✅ Import job-related routes
 import Mentor from './Mentor.js';
+import getUserDetailsByEmail from '../controller/userdetails.js';
 const upload = multer();
 
 
@@ -86,11 +87,14 @@ Router.get('/fetch-followup-templates/:email', fetchFollowUpTemplate);
 
 Router.get("/email-logs/", getEmailLogs);
 
-Router.use('/mentors', Mentor);
+Router.use("/get-user-details/:email", getUserDetailsByEmail);
 
+Router.use('/mentors', Mentor);
 // ✅ Recruiter Routes
 Router.use('/recruiters', recruiterRoutes); // e.g., POST /api/recruiters/add
 // ✅ Job Routes
+Router.use('/pending-requests', getPendingRequests);
+Router.use('/requests/:userId/:role/:action', handleRequestAction);
 Router.use('/jobs', jobRoutes); // e.g., GET /api/jobs/list, POST /api/jobs/add
 // ✅ Network Routes
 Router.use('/network', networkRoutes); // e.g., POST /api/network/send-request, GET /api/network/connections
