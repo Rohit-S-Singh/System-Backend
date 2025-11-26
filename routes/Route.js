@@ -46,6 +46,7 @@ import jobRoutes from './JobAdmin.js'; // ✅ Import job-related routes
 import verifyToken from '../controller/verifyautologin.js' // ✅ Import job-related routes
 import Mentor from './Mentor.js';
 import getUserDetailsByEmail from '../controller/userdetails.js';
+import {updateUserCategory} from '../controller/userCategoryController.js';
 const upload = multer();
 
 
@@ -57,7 +58,7 @@ Router.get('/health-check', (req, res) => {
   res.json({ status: 200, message: "Server is working" });
 });
 Router.post('/verifyToken', verifyToken);
-
+Router.post('/enter-updateUserCategory',  updateUserCategory );
 
 // ✅ Auth routes
 Router.post('/login', LoginUser);
@@ -92,6 +93,7 @@ Router.use("/get-user-details/:email", getUserDetailsByEmail);
 Router.use('/mentors', Mentor);
 // ✅ Recruiter Routes
 Router.use('/recruiters', recruiterRoutes); // e.g., POST /api/recruiters/add
+
 // ✅ Job Routes
 Router.use('/pending-requests', getPendingRequests);
 Router.use('/requests/:userId/:role/:action', handleRequestAction);

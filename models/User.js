@@ -204,8 +204,11 @@ recruiterStatus: {
     github: { type: String },
     linkedin: { type: String },
 
-    careerLevel: { type: String, enum: ["Intern", "Entry", "Mid", "Senior"] },
-    workMode: { type: String, enum: ["Remote", "Hybrid", "Onsite"] },
+careerLevel: {
+  type: String,
+  enum: ["intern", "entry", "mid", "senior", "lead", "executive"]
+},
+workMode: { type: String, enum: ["remote", "hybrid", "onsite"] },
 
     preferredJobRole: { type: String },
     preferredLocations: { type: [String] },
