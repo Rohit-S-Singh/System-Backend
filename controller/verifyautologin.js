@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import User from "../models/User.js"; // ✅ Import User model
+import User from "../models/User.js";
 
 dotenv.config();
 
@@ -12,74 +12,68 @@ const verifyToken = async (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Please login. No token provided! 1234567"});
+      return res.status(401).json({
+        success: false,
+        message: "Please login. No token provided!",
+      });
     }
 
     const token = authHeader.split(" ")[1];
-    console.log("🔹 Token received:", token);
-
     if (!token) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Token missing in header!" });
+      return res.status(401).json({
+        success: false,
+        message: "Token missing from header!",
+      });
     }
 
-    // ✅ Verify token
     jwt.verify(token, secretKey, async (err, decoded) => {
       if (err) {
-        console.error("❌ Token verification failed:123456789", err);
-        return res
-          .status(403)
-          .json({ success: false, message: "Invalid or expired token!" });
+        console.log("❌ Invalid token:", err);
+        return res.status(403).json({
+          success: false,
+          message: "Invalid or expired token!",
+        });
       }
 
-      console.log("✅ Token verified successfully for user:", decoded);
+      console.log("🔹 Token decoded:", decoded);
 
       try {
-        // ✅ Find the user in database using decoded email
-        const user = await User.findOne({ email: decoded.email }).select(
-          "-password" // optional: exclude password
-        );
-        console.log("checking user ",user);
-
-        console.log("**********************************************************************************");
-        console.log(user.picture);
-        
-        
-        
+        // ⭐ Use lean() to ensure ALL nested fields are returned
+        const user = await User.findOne({ email: decoded.email }).lean();
 
         if (!user) {
           return res.status(404).json({
             success: false,
-            message: "User not found in database",
+            message: "User not found",
           });
         }
-       console.log("*****************************************************");
-       
-        console.log(user);
-        
 
-        // ✅ Return full user details
+        // ⭐ Remove password safely
+        delete user.password;
+
+        console.log("🔍 Final user sent to frontend =", user);
+
+        // ⭐ Return full user including userType ALWAYS
         return res.status(200).json({
           success: true,
           message: "Token verified successfully",
           user,
         });
-      } catch (dbError) {
-        console.error("❌ Error fetching user from DB:", dbError);
+
+      } catch (dbErr) {
+        console.log("❌ DB fetch error:", dbErr);
         return res.status(500).json({
           success: false,
-          message: "Error fetching user from database",
+          message: "Database error",
         });
       }
     });
   } catch (error) {
-    console.error("❌ Error in token verification:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+    console.error("❌ Server error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
