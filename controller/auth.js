@@ -83,6 +83,7 @@ export const sendEmail = async (req, res) => {
     }
 
     const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+    
     oAuth2Client.setCredentials({
       access_token: user.accessToken,
       refresh_token: user.refreshToken,
@@ -91,6 +92,7 @@ export const sendEmail = async (req, res) => {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
     const boundary = "boundary_" + Date.now();
+    
     const messageParts = [
       `From: ${from}`,
       `To: ${to}`,
@@ -140,6 +142,7 @@ export const sendEmail = async (req, res) => {
     const response = await gmail.users.messages.send(gmailRequest);
 
     const recruiter = await Recruiter.findOne({ email: to }).lean();
+    
     if (!recruiter) {
       return res.status(404).json({ success: false, message: "Recruiter not found" });
     }
