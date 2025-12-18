@@ -47,6 +47,19 @@ import verifyToken from '../controller/verifyautologin.js' // ✅ Import job-rel
 import Mentor from './Mentor.js';
 import getUserDetailsByEmail from '../controller/userdetails.js';
 import {updateUserCategory} from '../controller/userCategoryController.js';
+import {
+  searchJobs,
+  searchPeople,
+  searchCompanies,
+  getSearchSuggestions,
+  getPopularSearches
+} from "../controller/SearchController.js";
+
+import { getMyResume , getAllResumes,setActiveResume, getActiveResume} from "../controller/resumeController.js";
+import { uploadResume } from "../controller/resumeController.js";
+import uploadResumeMiddleware from "../middleware/uploadResume.js";
+
+
 const upload = multer();
 
 
@@ -66,9 +79,22 @@ Router.post('/register', RegisterUser);
 Router.post('/set-password', setPasswordForOAuthUser);
 Router.post('/oauth2/callback', GoogleAuthHandler);
 Router.get('/authUrl', getAuthUrl);
-Router.get('/oauth2/callback', oauthCallback);
+// Router.post('/oauth2/callback', oauthCallback);
 Router.post('/check-email-connection', CheckEmailConnection);
 Router.post("/send-email", upload.single("attachment"), sendEmail);
+
+//---------------------------------------------------------------------------------------
+//RESUME
+Router.get('/get-my-resume',  getMyResume);
+Router.get('/resume/all',  getAllResumes);
+Router.post('/resume/set-active', setActiveResume);
+Router.post('/resume/active', getActiveResume);
+Router.post(
+  '/upload',
+  uploadResumeMiddleware.single("resume"),
+  uploadResume
+);
+
 
 // ✅ User and chat routes
 Router.get('/get-all-users', authenticateToken, getAllUsers);
@@ -85,6 +111,13 @@ Router.get("/get-html-template",fetchTemplateByEmail);
 Router.get("/email-journey", getEmailThreadLogs); // Ensure this route is protected
 Router.post('/save-followup-template', saveFollowUpTemplate);
 Router.get('/fetch-followup-templates/:email', fetchFollowUpTemplate);
+
+Router.get('/jobs', searchJobs);
+Router.get('/people', searchPeople);
+Router.get('/companies', searchCompanies);
+// Autocomplete and suggestions
+Router.get('/suggestions', getSearchSuggestions);
+Router.get('/popular', getPopularSearches);
 
 Router.get("/email-logs/", getEmailLogs);
 
