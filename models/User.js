@@ -156,6 +156,11 @@ recruiterStatus: {
     enum: ["student", "professional", null],
     default: null,
   },
+activeResume: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "resumes",
+  default: null
+},
 
   // ------------------ STUDENT DETAILS ------------------
   studentDetails: {
