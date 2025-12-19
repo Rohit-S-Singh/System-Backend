@@ -7,6 +7,17 @@ import { registerSchemaValidation, LoginschemaValidation } from '../validations/
 import pkg from 'bcryptjs';
 import EmailLog from "../models/EmailLogs.js";
 import Recruiter from '../models/Recruiter.js';
+import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
+import Resume from "../models/Resume.js";
+import { generateIndustryResume } from "../services/resumeGenerator.js";
+
+/**
+ * @desc    Register new user
+ * @route   POST /api/register
+ * @access  Public
+ */
+
 const { hash, compare } = pkg;
 dotenv.config();
 
@@ -215,7 +226,7 @@ export const CheckEmailConnection = async (req, res) => {
 };
 
 export const GoogleAuthHandler = async (req, res) => {
-  console.log("checking google");
+
   
   const { token } = req.body;
   if (!token) return res.status(400).json({ success: false, message: "Token missing" });
@@ -253,70 +264,254 @@ export const GoogleAuthHandler = async (req, res) => {
   }
 };
 
-
 export const RegisterUser = async (req, res) => {
-  const { name, email, password, phone } = req.body;
-  const { error } = registerSchemaValidation.validate({ name, email, password, phone });
-
-  if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
-
   try {
-    const ifExist = await User.findOne({ email });
-    if (ifExist) return res.json({ success: false, message: "User Already Exists" });
+    const { userName, email, password, accountType } = req.body;
 
-    const hashedPassword = await hash(password, 12);
-    await User.create({ email, name, password: hashedPassword, phone });
-
-    return res.json({ success: true, message: "Account created successfully" });
-  } catch (error) {
-    console.error("RegisterUser error:", error);
-    return res.json({ success: false, message: "Something went wrong" });
-  }
-};
-
-export const LoginUser = async (req, res) => {
-  const { email, password } = req.body;
-  const { error } = LoginschemaValidation.validate({ email, password });
-
-  if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
-
-  try {
-    const checkUser = await User.findOne({ email });
-    if (!checkUser) return res.json({ success: false, message: "Account not found" });
-
-    // Check if user has a password set (OAuth users might not have password)
-    if (!checkUser.password) {
-      return res.json({ 
-        success: false, 
-        message: "Please set a password to login. You previously signed in using OAuth.",
-        requiresPasswordSetup: true,
-        email: checkUser.email
+    // 🔒 Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        errorMessage: "Email and password are required",
       });
     }
 
-    const isMatch = await compare(password, checkUser.password);
-    if (!isMatch) return res.json({ success: false, message: "Incorrect password" });
+    if (password.length < 8) {
+      return res.status(400).json({
+        errorMessage: "Password must be at least 8 characters",
+      });
+    }
 
-    const token = jwt.sign({ id: checkUser._id, email: checkUser.email }, JWT_SECRET, { expiresIn: '1d' });
+    // 🔍 Check existing user
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        errorMessage: "Email already registered",
+      });
+    }
 
-    return res.json({ 
-      token, 
-      username: email,
-      id: checkUser._id,
-      user: {
-        id: checkUser._id,
-        email: checkUser.email,
-        name: checkUser.name,
-        givenName: checkUser.givenName,
-        familyName: checkUser.familyName,
-        picture: checkUser.picture
-      }
+    // 🔐 Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 🎯 Mentor logic
+    let isMentor = false;
+    let mentorStatus = "Become a Mentor";
+
+    if (accountType === "Mentor Account") {
+      isMentor = true;
+      mentorStatus = "Pending";
+    }
+
+    // 🧠 Create user (ONLY schema fields)
+    const user = await User.create({
+      name: userName,
+      email,
+      password: hashedPassword,
+
+      isMentor,
+      mentorStatus,
+
+      online: false,
+      hasCoinAccount: false,
+      referralCode: uuidv4().slice(0, 8),
+
+      notificationSettings: {
+        emailNotifications: true,
+        pushNotifications: true,
+        connectionRequests: true,
+        messages: true,
+        jobUpdates: true,
+      },
     });
+
+    return res.status(200).json({
+      success: true,
+      message: "User registered successfully",
+      user: {
+        id: user._id,
+        email: user.email,
+        isMentor: user.isMentor,
+        mentorStatus: user.mentorStatus,
+        userType: user.userType,
+      },
+    });
+
   } catch (error) {
-    console.error("LoginUser error:", error);
-    return res.json({ success: false, message: "Something went wrong" });
+    console.error("Register Error:", error);
+    return res.status(500).json({
+      errorMessage: "Server error during registration",
+    });
   }
 };
+
+
+
+// export const RegisterUser = async (req, res) => {
+
+//   console.log(req);
+  
+//   const { name, email, password, phone } = req.body;
+//   const { error } = registerSchemaValidation.validate({ name, email, password, phone });
+
+//   if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
+
+//   try {
+//     const ifExist = await User.findOne({ email });
+//     if (ifExist) return res.json({ success: false, message: "User Already Exists" });
+
+//     const hashedPassword = await hash(password, 12);
+//     await User.create({ email, name, password: hashedPassword, phone });
+
+//     return res.json({ success: true, message: "Account created successfully" });
+//   } catch (error) {
+//     console.error("RegisterUser error:", error);
+//     return res.json({ success: false, message: "Something went wrong" });
+//   }
+// };
+
+// export const LoginUser = async (req, res) => {
+//   const { email, password } = req.body;
+//   const { error } = LoginschemaValidation.validate({ email, password });
+
+//   if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
+
+//   try {
+//     const checkUser = await User.findOne({ email });
+//     if (!checkUser) return res.json({ success: false, message: "Account not found" });
+
+//     // Check if user has a password set (OAuth users might not have password)
+//     if (!checkUser.password) {
+//       return res.json({ 
+//         success: false, 
+//         message: "Please set a password to login. You previously signed in using OAuth.",
+//         requiresPasswordSetup: true,
+//         email: checkUser.email
+//       });
+//     }
+
+//     const isMatch = await compare(password, checkUser.password);
+//     if (!isMatch) return res.json({ success: false, message: "Incorrect password" });
+
+//     const token = jwt.sign({ id: checkUser._id, email: checkUser.email }, JWT_SECRET, { expiresIn: '1d' });
+
+//     return res.json({ 
+//       token, 
+//       username: email,
+//       id: checkUser._id,
+//       user: {
+//         id: checkUser._id,
+//         email: checkUser.email,
+//         name: checkUser.name,
+//         givenName: checkUser.givenName,
+//         familyName: checkUser.familyName,
+//         picture: checkUser.picture
+//       }
+//     });
+//   } catch (error) {
+//     console.error("LoginUser error:", error);
+//     return res.json({ success: false, message: "Something went wrong" });
+//   }
+// };
+
+export const LoginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // 🔒 Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        errorMessage: "Email and password are required",
+      });
+    }
+
+    // 🔍 Find user
+    const user = await User.findOne({ email });
+    if (!user || !user.password) {
+      return res.status(401).json({
+        errorMessage: "Invalid email or password",
+      });
+    }
+
+    // 🔐 Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        errorMessage: "Invalid email or password",
+      });
+    }
+
+    // 🔑 Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // 🟢 Update login state
+    user.online = true;
+    user.accessToken = token;
+    user.tokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    /**
+     * -------------------------------------------------------
+     * 🧠 PHASE 1 — AUTO-GENERATED RESUME (ONCE)
+     * -------------------------------------------------------
+     */
+    let autoGeneratedResume = await Resume.findOne({
+      userId: user._id,
+      type: "auto-generated",
+    });
+
+    if (!autoGeneratedResume) {
+      const resumeContent = generateIndustryResume(user);
+
+      autoGeneratedResume = await Resume.create({
+        userId: user._id,
+        type: "auto-generated",
+        content: resumeContent,
+      });
+    }
+
+    /**
+     * -------------------------------------------------------
+     * 🧠 PHASE 2.5 — SET ACTIVE RESUME (IF NOT SET)
+     * -------------------------------------------------------
+     */
+    if (!user.activeResume) {
+      user.activeResume = autoGeneratedResume._id;
+    }
+
+    await user.save();
+
+    // ✅ Final response
+    return res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        picture: user.picture,
+        isMentor: user.isMentor,
+        mentorStatus: user.mentorStatus,
+        isRecruiter: user.isRecruiter,
+        userType: user.userType,
+        activeResume: user.activeResume, // 🔑 important for frontend
+      },
+    });
+
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      errorMessage: "Server error during login",
+    });
+  }
+};
+
+
+
+
+
+
+
 
 
 export const getAllLogsByUser = async (req, res) => {
