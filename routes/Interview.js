@@ -8,9 +8,9 @@ import {
   getInterviewDetails,
   cancelInterview,
   completeInterview,
-  getAvailableMentors,
+  getMentorList,
   updateMentorProfile
-} from '../controller/Interview.js';
+} from '../controller/interviews/Interview.js';
 
 import authenticateToken from '../middleware/index.js';
 
@@ -32,7 +32,7 @@ Router.get('/user', getUserInterviews);
 Router.get('/details/:interviewId', getInterviewDetails);
 
 // Mentor management
-Router.get('/mentors', getAvailableMentors);
+Router.get('/mentors', getMentorList);
 Router.put('/mentor-profile', updateMentorProfile);
 
 export default Router; 

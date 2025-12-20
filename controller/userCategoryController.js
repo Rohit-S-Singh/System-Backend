@@ -1,6 +1,5 @@
 import User from "../models/User.js";
-
-export const updateUserCategory = async (req, res) => {
+ const updateUserCategory = async (req, res) => {
   try {
     const { email, userType, studentDetails, professionalDetails } = req.body;
 
@@ -85,3 +84,4 @@ export const updateUserCategory = async (req, res) => {
     });
   }
 };
+export default updateUserCategory;
