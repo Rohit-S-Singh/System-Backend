@@ -1,7 +1,7 @@
 import { Coin, CoinTransaction } from '../../models/Coin.js';
 import User from '../../models/User.js';
 import Subscription from '../../models/Subscription.js';
-import Interview from '../../models/Interview.js';
+// import Interview from '../../models/interview/Interview.js';
 
 import { createNotification } from '../Notification.js';
 import crypto from 'crypto';

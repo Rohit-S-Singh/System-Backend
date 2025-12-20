@@ -1,73 +1,98 @@
 // models/Mentor.js
 import mongoose from "mongoose";
 
-const MentorSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "users",
-    required: true,
-    unique: true
-  },
-
-  status: {
-    type: String,
-    enum: ["pending", "active", "inactive", "suspended"],
-    default: "pending"
-  },
-
-  expertise: {
-    type: [String],           // ["React", "System Design", "DSA"]
-    required: true
-  },
-
-  experience: {
-    type: Number,             // years
-    required: true
-  },
-
-  bio: {
-    type: String
-  },
-
-  hourlyRate: {
-    type: Number              // optional monetization later
-  },
-
-  interviewTypes: [{
-    type: String,
-    enum: [
-      "technical",
-      "behavioral",
-      "mock",
-      "resume_review",
-      "career_guidance"
-    ]
-  }],
-
-  availability: [{
-    day: {
-      type: String,           // Monday, Tuesday
+const MentorSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      required: true,
+      unique: true
     },
-    slots: [{
-      type: String            // "10:00-11:00"
-    }]
-  }],
 
-  rating: {
-    type: Number,
-    default: 0
+    status: {
+      type: String,
+      enum: ["pending", "active", "inactive", "suspended"],
+      default: "active" // ✅ avoids booking issues
+    },
+
+    expertise: {
+      type: [String],
+      required: true
+    },
+
+    experience: {
+      type: Number,
+      required: true
+    },
+
+    bio: {
+      type: String
+    },
+
+    // ✅ Matches frontend (pricePerHour)
+    pricePerHour: {
+      type: Number,
+      required: true
+    },
+
+    interviewTypes: [
+      {
+        type: String,
+        enum: [
+          "technical",
+          "behavioral",
+          "mock",
+          "resume_review",
+          "career_guidance",
+          "system_design"
+        ]
+      }
+    ],
+
+    /* =====================================================
+       SIMPLE AVAILABILITY (USED BY FRONTEND UI)
+    ===================================================== */
+    availability: {
+      type: String,
+      enum: ["Available", "Busy"],
+      default: "Available"
+    },
+
+    /* =====================================================
+       SLOT-BASED AVAILABILITY (FOR FUTURE USE)
+    ===================================================== */
+    availabilitySlots: [
+      {
+        day: {
+          type: String, // Monday, Tuesday, etc.
+          required: true
+        },
+        slots: [
+          {
+            type: String // "10:00-11:00"
+          }
+        ]
+      }
+    ],
+
+    rating: {
+      type: Number,
+      default: 4.5
+    },
+
+    // ✅ Matches frontend (completedInterviews)
+    completedInterviews: {
+      type: Number,
+      default: 0
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: true
+    }
   },
-
-  totalInterviews: {
-    type: Number,
-    default: 0
-  },
-
-  isVerified: {
-    type: Boolean,
-    default: false
-  }
-
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 export default mongoose.model("mentors", MentorSchema);

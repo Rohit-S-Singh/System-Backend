@@ -3,6 +3,7 @@ import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import User from '../models/User.js';
+import Mentor from '../models/Mentor.js';
 import { registerSchemaValidation, LoginschemaValidation } from '../validations/index.js';
 import pkg from 'bcryptjs';
 import EmailLog from "../models/EmailLogs.js";
@@ -716,5 +717,86 @@ export const getUserByEmail = async (req, res) => {
       success: false, 
       message: "Something went wrong while fetching user data" 
     });
+  }
+};
+
+
+
+// GET /api/users/:userId
+export const getUserById = async (req, res) => {
+  try {
+
+
+  
+    
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    // Fetch user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Return only the fields you need (optional)
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      givenName: user.givenName,
+      familyName: user.familyName,
+      picture: user.picture,
+      email: user.email,
+      userType: user.userType,
+      studentDetails: user.studentDetails,
+      professionalDetails: user.professionalDetails,
+    };
+  console.log("oyeee");
+    return res.status(200).json({ success: true, user: userData });
+  } catch (error) {
+    console.error("Get User Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+// GET /api/mentors/:mentorId
+export const getMentorById = async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+
+    if (!mentorId) {
+      return res.status(400).json({ success: false, message: "Mentor ID is required" });
+    }
+
+    // Find mentor by ID and populate the 'user' field
+    const mentor = await Mentor.findById(mentorId).populate("user", "_id name email picture");
+
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    // Prepare data to return
+    const mentorData = {
+      _id: mentor._id,
+      user: mentor.user, // contains user _id, name, email, picture
+      expertise: mentor.expertise,
+      experience: mentor.experience,
+      bio: mentor.bio,
+      pricePerHour: mentor.pricePerHour,
+      interviewTypes: mentor.interviewTypes,
+      availability: mentor.availability,
+      rating: mentor.rating,
+      completedInterviews: mentor.completedInterviews,
+    };
+
+    return res.status(200).json({ success: true, mentor: mentorData });
+  } catch (error) {
+    console.error("Get Mentor Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
