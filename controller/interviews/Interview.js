@@ -1,5 +1,8 @@
 import Mentor from "../../models/Mentor.js";
-import Interview from '../../models/Interview.js';
+import RequestInterview from '../../models/interview/InterviewRequest.js';
+import InterviewScheduled from "../../models/interview/interviewSchedule.js";
+import InterviewHistory from "../../models/interview/InterviewHistory.js";
+// import Interview from '../../models/interview/Interview.js';
 import User from '../../models/User.js';
 import { createNotification } from '../Notification.js';
 import { awardInterviewCoins } from '../coins/Coin.js';
@@ -67,276 +70,51 @@ const createCalendarEvent = async (user, interview) => {
   }
 };
 
-// Send interview request
-// export const requestInterview = async (req, res) => {
-//   try {
-//     const {
-//       mentorId,
-//       interviewType,
-//       scheduledDate,
-//       duration,
-//       timezone,
-//       title,
-//       description,
-//       candidateNotes
-//     } = req.body;
 
-//     const candidateId = req.user.id;
-
-//     // Validate input
-//     if (!mentorId || !interviewType || !scheduledDate || !title) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Missing required fields: mentorId, interviewType, scheduledDate, title'
-//       });
-//     }
-
-//     // Check if candidate and mentor are the same
-//     if (candidateId === mentorId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'You cannot schedule an interview with yourself'
-//       });
-//     }
-
-//     // Check if mentor exists and is active
-//     const mentor = await User.findById(mentorId);
-//     if (!mentor) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Mentor not found'
-//       });
-//     }
-
-//     if (!mentor.isMentor || mentor.mentorStatus !== 'active') {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Mentor is not available for interviews'
-//       });
-//     }
-
-//     // Check if mentor supports this interview type
-//     if (mentor.mentorProfile?.interviewTypes && 
-//         !mentor.mentorProfile.interviewTypes.includes(interviewType)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Mentor does not offer this type of interview'
-//       });
-//     }
-
-//     // Check for scheduling conflicts
-//     const scheduledDateObj = new Date(scheduledDate);
-//     const interviewDuration = duration || 60;
-//     const endTime = new Date(scheduledDateObj.getTime() + interviewDuration * 60000);
-
-//     // Find any existing interviews that might conflict
-//     const existingInterviews = await Interview.find({
-//       mentor: mentorId,
-//       status: { $in: ['pending', 'accepted'] }
-//     });
-
-//     // Check for conflicts manually
-//     const conflictingInterview = existingInterviews.find(existing => {
-//       const existingEndTime = new Date(existing.scheduledDate.getTime() + existing.duration * 60000);
-      
-//       // Check if interviews overlap
-//       return (
-//         (scheduledDateObj < existingEndTime && endTime > existing.scheduledDate) ||
-//         (existing.scheduledDate < endTime && existingEndTime > scheduledDateObj)
-//       );
-//     });
-
-//     if (conflictingInterview) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Mentor has a conflicting interview at this time'
-//       });
-//     }
-
-//     // Create interview request
-//     const interview = new Interview({
-//       candidate: candidateId,
-//       mentor: mentorId,
-//       interviewType,
-//       scheduledDate: scheduledDateObj,
-//       duration: duration || 60,
-//       timezone: timezone || 'UTC',
-//       title,
-//       description,
-//       candidateNotes
-//     });
-
-//     await interview.save();
-
-//     // Populate user details
-//     await interview.populate('candidate', 'name email givenName familyName');
-//     await interview.populate('mentor', 'name email givenName familyName');
-
-//     // Create notification for mentor
-//     await createNotification({
-//       recipient: mentorId,
-//       sender: candidateId,
-//       type: 'interview_request',
-//       title: 'New Interview Request',
-//       message: `${interview.candidate.name || interview.candidate.email} has requested a ${interviewType} interview`,
-//       data: {
-//         interviewId: interview._id,
-//         interviewType,
-//         scheduledDate: interview.scheduledDate,
-//         candidateName: interview.candidate.name,
-//         candidateEmail: interview.candidate.email
-//       },
-//       actionUrl: `/interviews/pending`,
-//       actionText: 'View Request',
-//       priority: 'high'
-//     });
-
-//     res.status(201).json({
-//       success: true,
-//       message: 'Interview request sent successfully',
-//       data: interview
-//     });
-
-//   } catch (error) {
-//     console.error('Error requesting interview:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Internal server error',
-//       error: error.message
-//     });
-//   }
-// };
-export const requestInterview = async (req, res) => {
+export const createInterviewRequest = async (req, res) => {
   try {
-    const {
-      mentorId,
-      interviewType,
-      scheduledDate,
-      duration,
-      title,
-      description,
-      candidateNotes
-    } = req.body;
+    const { mentor, user, date, day, time, duration, message, additionalDetails } = req.body;
 
-    const mentor = await Mentor.findById(mentorId);
-    if (!mentor || mentor.status !== "active") {
-      return res.status(400).json({ message: "Mentor not available" });
+    // Validate required fields
+    if (!mentor || !user || !date || !day || !time || !duration || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "All required fields must be provided.",
+      });
     }
 
-    const interview = await Interview.create({
-      candidate: req.user._id,
-      mentor: mentor.user,
-      interviewType,
-      scheduledDate,
+    // Create new interview request
+    const newRequest = new RequestInterview({
+      mentor,
+      user,
+      date,
+      day,
+      time,
       duration,
-      title,
-      description,
-      candidateNotes
+      message,
+      additionalDetails,
     });
 
-    await Notification.create({
-      recipient: mentor.user,
-      sender: req.user._id,
-      type: "interview_request",
-      title: "New Interview Request",
-      message: `${req.user.name} requested an interview`,
-      interview: interview._id,
-      actionUrl: `/mentor/interviews`
+    const savedRequest = await newRequest.save();
+console.log("hi");
+    return res.status(201).json({
+      success: true,
+      message: "Interview request created successfully.",
+      request: savedRequest,
     });
-
-    res.status(201).json(interview);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    
+    
+  } catch (error) {
+    console.error("Error creating interview request:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create interview request.",
+    });
   }
 };
 
 
 
-// Accept interview request
-// export const acceptInterview = async (req, res) => {
-//   try {
-//     const { interviewId, mentorNotes, meetingLink } = req.body;
-//     const mentorId = req.user.id;
-
-//     const interview = await Interview.findById(interviewId)
-//       .populate('candidate', 'name email givenName familyName')
-//       .populate('mentor', 'name email givenName familyName accessToken refreshToken');
-
-//     if (!interview) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Interview not found'
-//       });
-//     }
-
-//     if (interview.mentor._id.toString() !== mentorId) {
-//       return res.status(403).json({
-//         success: false,
-//         message: 'You can only accept interviews assigned to you'
-//       });
-//     }
-
-//     if (interview.status !== 'pending') {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Interview is not in pending status'
-//       });
-//     }
-
-//     // Update interview status
-//     interview.status = 'accepted';
-//     interview.acceptedAt = new Date();
-//     interview.mentorNotes = mentorNotes;
-//     interview.meetingLink = meetingLink;
-
-//     // Create calendar event if mentor has OAuth setup
-//     if (interview.mentor.accessToken && interview.mentor.refreshToken) {
-//       try {
-//         const calendarEvent = await createCalendarEvent(interview.mentor, interview);
-//         interview.calendarEventId = calendarEvent.id;
-//         interview.meetingLink = calendarEvent.hangoutLink || meetingLink;
-//       } catch (calendarError) {
-//         console.error('Calendar event creation failed:', calendarError);
-//         // Continue without calendar event
-//       }
-//     }
-
-//     await interview.save();
-
-//     // Create notification for candidate
-//     await createNotification({
-//       recipient: interview.candidate._id,
-//       sender: mentorId,
-//       type: 'interview_accepted',
-//       title: 'Interview Request Accepted',
-//       message: `${interview.mentor.name || interview.mentor.email} has accepted your interview request`,
-//       data: {
-//         interviewId: interview._id,
-//         interviewType: interview.interviewType,
-//         scheduledDate: interview.scheduledDate,
-//         mentorName: interview.mentor.name,
-//         meetingLink: interview.meetingLink
-//       },
-//       actionUrl: `/interviews/${interview._id}`,
-//       actionText: 'View Details',
-//       priority: 'high'
-//     });
-
-//     res.json({
-//       success: true,
-//       message: 'Interview accepted successfully',
-//       data: interview
-//     });
-
-//   } catch (error) {
-//     console.error('Error accepting interview:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Internal server error',
-//       error: error.message
-//     });
-//   }
-// };
 export const acceptInterview = async (req, res) => {
   const { interviewId, mentorNotes } = req.body;
 
@@ -362,76 +140,6 @@ export const acceptInterview = async (req, res) => {
 
 
 
-// Reject interview request
-// export const rejectInterview = async (req, res) => {
-//   try {
-//     const { interviewId, reason } = req.body;
-//     const mentorId = req.user.id;
-
-//     const interview = await Interview.findById(interviewId)
-//       .populate('candidate', 'name email givenName familyName')
-//       .populate('mentor', 'name email givenName familyName');
-
-//     if (!interview) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Interview not found'
-//       });
-//     }
-
-//     if (interview.mentor._id.toString() !== mentorId) {
-//       return res.status(403).json({
-//         success: false,
-//         message: 'You can only reject interviews assigned to you'
-//       });
-//     }
-
-//     if (interview.status !== 'pending') {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Interview is not in pending status'
-//       });
-//     }
-
-//     // Update interview status
-//     interview.status = 'rejected';
-//     interview.rejectedAt = new Date();
-//     interview.mentorNotes = reason;
-
-//     await interview.save();
-
-//     // Create notification for candidate
-//     await createNotification({
-//       recipient: interview.candidate._id,
-//       sender: mentorId,
-//       type: 'interview_rejected',
-//       title: 'Interview Request Rejected',
-//       message: `${interview.mentor.name || interview.mentor.email} has rejected your interview request`,
-//       data: {
-//         interviewId: interview._id,
-//         interviewType: interview.interviewType,
-//         scheduledDate: interview.scheduledDate,
-//         mentorName: interview.mentor.name,
-//         reason: reason
-//       },
-//       priority: 'medium'
-//     });
-
-//     res.json({
-//       success: true,
-//       message: 'Interview rejected successfully',
-//       data: interview
-//     });
-
-//   } catch (error) {
-//     console.error('Error rejecting interview:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Internal server error',
-//       error: error.message
-//     });
-//   }
-// };
 export const rejectInterview = async (req, res) => {
   const { interviewId, reason } = req.body;
 
@@ -649,99 +357,131 @@ export const cancelInterview = async (req, res) => {
   }
 };
 
-// Mark interview as completed and award coins
-// export const completeInterview = async (req, res) => {
+
+
+// // export const getMentorList = async (req, res) => {
+// //   console.log("mentorlist");
+  
+// //   try {
+// //     const {
+// //       expertise,
+// //       interviewType,
+// //       minExperience,
+// //       verified,
+// //       status = "active",
+// //       page = 1,
+// //       limit = 10,
+// //     } = req.query;
+
+// //     const filter = {};
+
+// //     // Only active mentors by default
+// //     if (status) filter.status = status;
+
+// //     if (verified !== undefined) {
+// //       filter.isVerified = verified === "true";
+// //     }
+
+// //     if (expertise) {
+// //       filter.expertise = { $in: expertise.split(",") };
+// //     }
+
+// //     if (interviewType) {
+// //       filter.interviewTypes = interviewType;
+// //     }
+
+// //     if (minExperience) {
+// //       filter.experience = { $gte: Number(minExperience) };
+// //     }
+
+// //     const mentors = await Mentor.find(filter)
+// //       .populate("user", "name email picture")
+// //       .sort({ rating: -1, experience: -1 })
+// //       .skip((page - 1) * limit)
+// //       .limit(Number(limit));
+
+// //     const total = await Mentor.countDocuments(filter);
+
+// //     return res.status(200).json({
+// //       success: true,
+// //       total,
+// //       page: Number(page),
+// //       totalPages: Math.ceil(total / limit),
+// //       mentors,
+// //     });
+// //   } catch (error) {
+// //     console.error("Get Mentor List Error:", error);
+// //     return res.status(500).json({
+// //       success: false,
+// //       message: "Failed to fetch mentors",
+// //     });
+// //   }
+// // };
+
+// export const getMentorList = async (req, res) => {
+//   console.log("mentorlist");
+
 //   try {
-//     const { interviewId } = req.body;
-//     const userId = req.user.id;
+//     const {
+//       expertise,
+//       interviewType,
+//       minExperience,
+//       verified,
+//       status = "active",
+//       page = 1,
+//       limit = 10,
+//     } = req.query;
 
-//     const interview = await Interview.findById(interviewId)
-//       .populate('candidate', 'name email givenName familyName')
-//       .populate('mentor', 'name email givenName familyName');
+//     const filter = {};
 
-//     if (!interview) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Interview not found'
-//       });
+//     // Only active mentors by default
+//     if (status) filter.status = status;
+
+//     if (verified !== undefined) {
+//       filter.isVerified = verified === "true";
 //     }
 
-//     // Check if user is part of this interview
-//     const isCandidate = interview.candidate._id.toString() === userId;
-//     const isMentor = interview.mentor._id.toString() === userId;
-
-//     if (!isCandidate && !isMentor) {
-//       return res.status(403).json({
-//         success: false,
-//         message: 'You are not authorized to complete this interview'
-//       });
+//     if (expertise) {
+//       filter.expertise = { $in: expertise.split(",") };
 //     }
 
-//     if (interview.status !== 'accepted') {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Interview must be accepted before it can be completed'
-//       });
+//     if (interviewType) {
+//       filter.interviewTypes = interviewType;
 //     }
 
-//     // Update interview status
-//     interview.status = 'completed';
-//     interview.completedAt = new Date();
-//     await interview.save();
-
-//     // Award coins to both parties
-//     try {
-//       await awardInterviewCoins(interviewId, interview.candidate._id, interview.mentor._id);
-//     } catch (coinError) {
-//       console.error('Error awarding coins:', coinError);
-//       // Continue even if coin awarding fails
+//     if (minExperience) {
+//       filter.experience = { $gte: Number(minExperience) };
 //     }
 
-//     res.json({
+//     const mentors = await Mentor.find(filter)
+//       // ✅ INCLUDE _id EXPLICITLY
+//       .populate("user", "_id name email picture")
+//       .sort({ rating: -1, experience: -1 })
+//       .skip((page - 1) * limit)
+//       .limit(Number(limit));
+
+//     const total = await Mentor.countDocuments(filter);
+
+//     return res.status(200).json({
 //       success: true,
-//       message: 'Interview completed successfully. Coins have been awarded to both parties.',
-//       data: interview
+//       total,
+//       page: Number(page),
+//       totalPages: Math.ceil(total / limit),
+//       mentors,
 //     });
-
 //   } catch (error) {
-//     console.error('Error completing interview:', error);
-//     res.status(500).json({
+//     console.error("Get Mentor List Error:", error);
+//     return res.status(500).json({
 //       success: false,
-//       message: 'Internal server error',
-//       error: error.message
+//       message: "Failed to fetch mentors",
 //     });
 //   }
 // };
-export const completeInterview = async (req, res) => {
-  const { interviewId } = req.body;
-
-  const interview = await Interview.findById(interviewId);
-  interview.status = "completed";
-  interview.completedAt = new Date();
-  await interview.save();
-
-  await awardInterviewCoins(interview._id);
-
-  res.json({ message: "Interview completed & coins awarded" });
-};
 
 
-
-
-/**
- * =========================================
- * 1️⃣ Get List of Mentors
- * =========================================
- * Filters supported:
- * - expertise
- * - interviewType
- * - minExperience
- * - verified
- * - status
- * Pagination:
- * - page, limit
- */
 export const getMentorList = async (req, res) => {
+  console.log("mentorlist");
+
   try {
     const {
       expertise,
@@ -755,7 +495,6 @@ export const getMentorList = async (req, res) => {
 
     const filter = {};
 
-    // Only active mentors by default
     if (status) filter.status = status;
 
     if (verified !== undefined) {
@@ -774,8 +513,9 @@ export const getMentorList = async (req, res) => {
       filter.experience = { $gte: Number(minExperience) };
     }
 
+    // Fetch mentors WITHOUT populating user
     const mentors = await Mentor.find(filter)
-      .populate("user", "name email picture")
+      .select("_id user expertise experience bio pricePerHour interviewTypes availability rating completedInterviews") // return only required fields
       .sort({ rating: -1, experience: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
@@ -798,11 +538,7 @@ export const getMentorList = async (req, res) => {
   }
 };
 
-/**
- * =========================================
- * 2️⃣ Get Mentor Details by ID
- * =========================================
- */
+
 export const getMentorDetails = async (req, res) => {
   try {
     const { mentorId } = req.params;
@@ -894,3 +630,307 @@ export const updateMentorProfile = async (req, res) => {
     });
   }
 }; 
+
+
+
+
+/**
+ * UPDATE FEEDBACK (CANDIDATE NOTES)
+ * PUT /api/interviews/:id/feedback
+ */
+export const updateInterviewFeedback = async (req, res) => {
+  try {
+    const candidateId = req.user.userId;
+    const interviewId = req.params.id;
+    const { candidateNotes } = req.body;
+
+    const interview = await Interview.findOne({
+      _id: interviewId,
+      candidate: candidateId,
+      status: "completed"
+    });
+
+    if (!interview) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview not found or not completed"
+      });
+    }
+
+    interview.candidateNotes = candidateNotes;
+    await interview.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Feedback updated successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update feedback"
+    });
+  }
+};
+
+export const getMentorRequests = async (req, res) => {
+  try {
+    const { mentorUserId } = req.query;
+
+    if (!mentorUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "mentorUserId is required",
+      });
+    }
+
+    // 1. Find the mentor document for this user
+    const mentor = await Mentor.findOne({ user: mentorUserId });
+
+    if (!mentor) {
+      return res.status(404).json({
+        success: false,
+        message: "Mentor not found",
+      });
+    }
+
+    // 2. Find all interview requests for this mentor
+    const requests = await RequestInterview.find({ mentor: mentor._id })
+      .populate("user", "_id name email picture") // populate requester info
+      .sort({ createdAt: -1 });
+
+    // 3. Send response
+    return res.status(200).json({
+      success: true,
+      requests,
+    });
+  } catch (err) {
+    console.error("Get mentor requests error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+
+export const handleInterviewRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { action } = req.body; // "accept" or "reject"
+
+    const request = await RequestInterview.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ success: false, message: "Request not found" });
+    }
+
+    if (action === "accept") {
+      // Create a new scheduled interview
+      const scheduled = await InterviewScheduled.create({
+        mentor: request.mentor,
+        user: request.user,
+        date: request.date,
+        day: request.day,
+        time: request.time,
+        duration: request.duration,
+        message: request.message,
+        additionalDetails: request.additionalDetails,
+        status: "scheduled",
+      });
+
+      // Calculate time until 1 hour after scheduled interview
+      const interviewDate = new Date(request.date); // Assuming request.date has full date & time
+      const deleteTime = interviewDate.getTime() + 60 * 60 * 1000; // 1 hour later
+      const delay = deleteTime - Date.now();
+
+      // Schedule deletion
+      if (delay > 0) {
+        setTimeout(async () => {
+          try {
+            await InterviewScheduled.findByIdAndDelete(scheduled._id);
+            console.log(`Scheduled interview ${scheduled._id} deleted after 1 hour.`);
+          } catch (err) {
+            console.error("Failed to delete scheduled interview:", err);
+          }
+        }, delay);
+      }
+    }
+
+    // Remove the request from RequestInterview (for both accept & reject)
+    await RequestInterview.findByIdAndDelete(requestId);
+
+    return res.json({
+      success: true,
+      message: action === "accept" ? "Interview accepted and scheduled" : "Interview rejected",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+
+
+// controllers/interviewScheduledController.js
+
+// Get scheduled interviews for a logged-in user
+export const getScheduledInterviews = async (req, res) => {
+  try {
+    const { userId } = req.query; // user id sent from frontend
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    // Fetch interviews where user is either mentor or user
+    const interviews = await InterviewScheduled.find({
+      $or: [{ mentor: userId }, { user: userId }],
+    })
+      .populate("mentor", "user") // populate mentor's user reference
+      .populate("user", "name email") // populate user details
+      .sort({ date: 1 });
+
+    return res.json({ success: true, interviews });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+
+
+// controllers/interviewScheduledController.js
+export const cancelScheduledInterview = async (req, res) => {
+  try {
+    console.log("llllllllllllllllll");
+    
+    const { interviewId } = req.params;
+
+    const interview = await InterviewScheduled.findById(interviewId);
+    if (!interview) {
+      return res.status(404).json({ success: false, message: "Interview not found" });
+    }
+
+    // Option 1: Remove the interview completely
+    await InterviewScheduled.findByIdAndDelete(interviewId);
+
+    // Option 2 (alternative): Mark as cancelled instead
+    // interview.status = "cancelled";
+    // await interview.save();
+
+    return res.json({ success: true, message: "Interview cancelled successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+
+// controllers/interviewScheduledController.js
+export const rescheduleInterview = async (req, res) => {
+  console.log("l;l;");
+  
+  try {
+    const { interviewId } = req.params;
+    const { date, time, duration } = req.body;
+
+    const interview = await InterviewScheduled.findById(interviewId);
+    if (!interview) {
+      return res.status(404).json({ success: false, message: "Interview not found" });
+    }
+
+    interview.date = date || interview.date;
+    interview.time = time || interview.time;
+    interview.duration = duration || interview.duration;
+
+    await interview.save();
+
+    return res.json({ success: true, message: "Interview rescheduled successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+export const completeInterview = async (req, res) => {
+  try {
+    const { interviewId } = req.params;
+    const { feedback } = req.body;
+
+    if (!feedback) {
+      return res.status(400).json({
+        success: false,
+        message: "Feedback is required",
+      });
+    }
+
+    const interview = await InterviewScheduled.findById(interviewId);
+    if (!interview) {
+      return res.status(404).json({
+        success: false,
+        message: "Scheduled interview not found",
+      });
+    }
+
+    // 1️⃣ Add to InterviewHistory
+    await InterviewHistory.create({
+      mentor: interview.mentor,
+      user: interview.user,
+      date: interview.date,
+      day: interview.day,
+      time: interview.time,
+      duration: interview.duration,
+      message: interview.message,
+      additionalDetails: interview.additionalDetails,
+      feedback,
+      status: "completed",
+    });
+
+    // 2️⃣ Remove from InterviewScheduled
+    await InterviewScheduled.findByIdAndDelete(interviewId);
+
+    return res.json({
+      success: true,
+      message: "Interview marked as completed",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }};
+
+
+
+export const getInterviewHistory = async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID is required" });
+    }
+
+    const history = await InterviewHistory.find({
+      $or: [{ user: userId }, { mentor: userId }],
+    })
+      .populate("user", "name email")
+      .populate("mentor")
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      interviews: history,
+    });
+  } catch (error) {
+    console.error("Interview history error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
