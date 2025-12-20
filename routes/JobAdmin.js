@@ -1,20 +1,14 @@
 import { Router } from 'express';
-import {
-  createJob,
-  getJobs
-} from '../controller/JobHandlerAdmin.js';
 
+import { getRandomJobs,getJobsBySkillMatch ,filterJobs ,getJobDetails, createJob ,deleteJobById} from '../controller/jobs/JobHandlerAdmin.js';
 const JobRouter = Router();
 
 // Job CRUD routes
-JobRouter.post('/', createJob);
-JobRouter.get('/', getJobs);
-// router.get('/jobs/:id', getJobById);
-// router.put('/jobs/:id', updateJob);
-// router.delete('/jobs/:id', deleteJob);
-
-// // Referral routes
-// router.post('/jobs/:id/referrals', addReferral);
-// router.get('/jobs/:id/referrals', getReferralsByJob);
+JobRouter.get('/random', getRandomJobs);
+JobRouter.post('/by-skill-match', getJobsBySkillMatch);
+JobRouter.get('/filter', filterJobs);
+JobRouter.get("/jobs/:jobId", getJobDetails);
+JobRouter.post('/create', createJob);
+JobRouter.delete('/delete/:jobId', deleteJobById);
 
 export default JobRouter;

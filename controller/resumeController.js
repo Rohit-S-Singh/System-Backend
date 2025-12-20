@@ -43,7 +43,6 @@ export const uploadResume = async (req, res) => {
   }
 };
 
-
 export const getAllResumes = async (req, res) => {
   try {
     const resumes = await Resume.find({ userId: req.user._id })
@@ -113,8 +112,6 @@ export const getActiveResume = async (req, res) => {
     });
   }
 };
-
-
 
 export const getMyResume = async (req, res) => {
   
