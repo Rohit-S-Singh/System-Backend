@@ -21,6 +21,13 @@ const connectionUrl = "mongodb://rohitssingh17:Seeyouagain11!@ac-lo7eev6-shard-0
 
 
 app.use(cors());
+// app.use(cors({
+//   origin: "http://localhost:3000",
+//   methods: ["GET", "POST", "PUT", "DELETE"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true
+// }));
+
 const httpServer = createServer(app);
 
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
