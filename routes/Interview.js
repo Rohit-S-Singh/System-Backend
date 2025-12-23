@@ -1,30 +1,35 @@
 import express from 'express';
 import {
-  requestInterview,
-  acceptInterview,
-  rejectInterview,
+  rescheduleInterview,
+  cancelScheduledInterview,
+  createInterviewRequest,
+getScheduledInterviews,
   getPendingInterviews,
   getUserInterviews,
   getInterviewDetails,
   cancelInterview,
   completeInterview,
-  getAvailableMentors,
-  updateMentorProfile
-} from '../controller/Interview.js';
+  getMentorList,
+  updateMentorProfile,
+  getInterviewHistory,
+  updateInterviewFeedback,
+  getMentorRequests,
+  handleInterviewRequest 
+} from '../controller/interviews/Interview.js';
 
 import authenticateToken from '../middleware/index.js';
 
 const Router = express.Router();
 
 // All routes require authentication
-Router.use(authenticateToken);
+// Router.use(authenticateToken);
 
 // Interview scheduling and management
-Router.post('/request', requestInterview);
-Router.post('/accept', acceptInterview);
-Router.post('/reject', rejectInterview);
-Router.post('/cancel', cancelInterview);
-Router.post('/complete', completeInterview);
+Router.post('/request', createInterviewRequest);
+Router.patch("/handle/:requestId", handleInterviewRequest);
+// Router.post('/cancel', cancelInterview);
+
+
 
 // Get interviews
 Router.get('/pending', getPendingInterviews);
@@ -32,7 +37,20 @@ Router.get('/user', getUserInterviews);
 Router.get('/details/:interviewId', getInterviewDetails);
 
 // Mentor management
-Router.get('/mentors', getAvailableMentors);
+Router.get('/mentors', getMentorList);
 Router.put('/mentor-profile', updateMentorProfile);
+
+//history
+
+Router.get("/history",  getInterviewHistory);
+Router.put("/:id/feedback",  updateInterviewFeedback);
+
+Router.get("/mentor-requests", getMentorRequests);
+
+
+Router.get("/scheduled", getScheduledInterviews);
+Router.patch("/cancel/:interviewId", cancelScheduledInterview);
+Router.patch("/reschedule/:interviewId", rescheduleInterview);
+Router.post('/complete/:interviewId', completeInterview);
 
 export default Router; 

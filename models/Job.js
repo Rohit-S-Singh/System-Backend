@@ -1,140 +1,148 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const jobSchema = new mongoose.Schema(
   {
-    // 🔗 Recruiter who posted the job
-    recruiter: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+    /* ===============================
+       🔑 IDENTITY
+    =============================== */
+
+    externalJobId: {
+      type: String,
+      unique: true,
+      sparse: true, // allows internal jobs later
+      index: true,
     },
 
-    // 🏷 Job basic info
+    source: {
+      type: String, // LinkedIn, Indeed, Foundit, SimplyHired, etc.
+      required: true,
+      index: true,
+    },
+
+    /* ===============================
+       🏷 CORE JOB INFO
+    =============================== */
+
     title: {
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
 
     companyName: {
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
 
     companyLogo: {
-      type: String,
+      type: String, // URL
+      default: null,
     },
 
-    jobType: {
+    companyWebsite: {
       type: String,
-      enum: ['Full-Time', 'Part-Time', 'Internship', 'Contract'],
-      required: true,
+      default: null,
+    },
+
+    /* ===============================
+       📍 LOCATION & MODE
+    =============================== */
+
+    location: {
+      type: String, // "Mumbai, Maharashtra, India"
+      index: true,
     },
 
     workMode: {
       type: String,
-      enum: ['Remote', 'Onsite', 'Hybrid'],
-      required: true,
+      enum: ["Remote", "Onsite", "Hybrid"],
+      index: true,
     },
 
-    location: {
+    /* ===============================
+       💼 JOB TYPE
+    =============================== */
+
+    jobType: {
       type: String,
-      required: true,
+      enum: ["Full-Time", "Part-Time", "Internship", "Contract"],
+      index: true,
     },
 
-    // 📄 Job description
+    /* ===============================
+       📝 DESCRIPTION
+    =============================== */
+
     description: {
       type: String,
-      required: true,
     },
 
-    responsibilities: [
+    /* ===============================
+       🧠 SKILLS (OPTIONAL / AI LATER)
+    =============================== */
+
+    skills: [
       {
         type: String,
+        lowercase: true,
+        trim: true,
+        index: true,
       },
     ],
 
-    skillsRequired: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+    /* ===============================
+       🔗 APPLY INFO
+    =============================== */
 
-    // 🎓 Eligibility
-    eligibility: {
-      batch: [
-        {
-          type: Number,
-        },
-      ],
-      minCGPA: {
-        type: Number,
-        min: 0,
-        max: 10,
-      },
-      branchesAllowed: [
-        {
-          type: String,
-        },
-      ],
-    },
-
-    // 💰 Salary / Stipend
-    salary: {
-      min: {
-        type: Number,
-      },
-      max: {
-        type: Number,
-      },
-      currency: {
-        type: String,
-        default: 'INR',
-      },
-      period: {
-        type: String,
-        enum: ['Per Annum', 'Per Month'],
-        default: 'Per Annum',
-      },
-    },
-
-    // 🗓 Important dates
-    applicationDeadline: {
-      type: Date,
-      required: true,
-    },
-
-    // 🔗 Application
     applyLink: {
       type: String,
+      required: true,
     },
 
-    // 📊 Job status
+    applyType: {
+      type: String,
+      enum: ["external", "internal"],
+      default: "external",
+    },
+
+    /* ===============================
+       ⏱ DATES & STATUS
+    =============================== */
+
+    postedAt: {
+      type: Date,
+      default: null, // many RapidAPI jobs don't have this
+    },
+
     status: {
       type: String,
-      enum: ['Open', 'Closed', 'Paused'],
-      default: 'Open',
+      enum: ["Open", "Closed"],
+      default: "Open",
+      index: true,
     },
 
-    // 👥 Applicants count
-    applicantsCount: {
-      type: Number,
-      default: 0,
-    },
-
-    // 🔒 Admin moderation
-    isVerified: {
+    isActive: {
       type: Boolean,
-      default: false,
+      default: true,
+      index: true,
     },
   },
   {
-    timestamps: true,
-  }
+    timestamps: true, // createdAt, updatedAt
+  } 
 );
 
-const Job = mongoose.model('Job', jobSchema);
+/* ===============================
+   🔍 TEXT SEARCH
+=============================== */
+jobSchema.index({
+  title: "text",
+  companyName: "text",
+  location: "text",
+  skills: "text",
+});
 
-export default Job;
+export default mongoose.model("Job", jobSchema);

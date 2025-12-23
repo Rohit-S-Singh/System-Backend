@@ -1,10 +1,13 @@
-import express from 'express';
+import express from "express";
+import multer from "multer";
+
+// ---------- Controllers ----------
 import {
-  oauthCallback,
-  getAuthUrl,
-  GoogleAuthHandler,
   LoginUser,
   RegisterUser,
+  GoogleAuthHandler,
+  getAuthUrl,
+  setPasswordForOAuthUser,
   CheckEmailConnection,
   sendEmail,
   getEmailLogs,
@@ -12,9 +15,8 @@ import {
   fetchTemplateByEmail,
   saveTemplateByEmail,
   getEmailThreadLogs,
-  setPasswordForOAuthUser,
   getUserByEmail
-} from '../controller/auth.js';
+} from "../controller/auth.js";
 
 import {
   getAllUsers,
@@ -26,27 +28,16 @@ import {
   getGroupChat,
   deleteMessageFromMe,
   deleteGroup
-} from '../controller/chat.js';
+} from "../controller/chat.js";
 
+import {
+  getMyResume,
+  getAllResumes,
+  setActiveResume,
+  getActiveResume,
+  uploadResume
+} from "../controller/resumeController.js";
 
-import {getAllMentors, requestMentor} from '../controller/mentors.js'
-
-
-import { saveFollowUpTemplate, fetchFollowUpTemplate } from '../controller/Email-Sender.js';
-
-import authenticateToken from '../middleware/index.js';
-import recruiterRoutes from './Recruiter.js'; // ✅ Import recruiter routes
-import networkRoutes from './Network.js'; // ✅ Import network routes
-import notificationRoutes from './Notification.js'; // ✅ Import notification routes
-import interviewRoutes from './Interview.js'; // ✅ Import interview routes
-import coinRoutes from './Coin.js'; // ✅ Import coin routes
-import {getPendingRequests ,handleRequestAction} from '../controller/requestHandlerFromAdminRoutes.js';
-import multer from "multer";
-import jobRoutes from './JobAdmin.js'; // ✅ Import job-related routes
-import verifyToken from '../controller/verifyautologin.js' // ✅ Import job-related routes
-import Mentor from './Mentor.js';
-import getUserDetailsByEmail from '../controller/userdetails.js';
-import {updateUserCategory} from '../controller/userCategoryController.js';
 import {
   searchJobs,
   searchPeople,
@@ -55,110 +46,112 @@ import {
   getPopularSearches
 } from "../controller/SearchController.js";
 
-import { getMyResume , getAllResumes,setActiveResume, getActiveResume} from "../controller/resumeController.js";
-import { uploadResume } from "../controller/resumeController.js";
+import verifyToken from "../controller/verifyautologin.js";
+import authenticateToken from "../middleware/index.js";
 import uploadResumeMiddleware from "../middleware/uploadResume.js";
 
-
+// ---------- Route Groups ----------
+import recruiterRoutes from "./Recruiter.js";
+import jobRoutes from "./JobAdmin.js";
+import networkRoutes from "./Network.js";
+import notificationRoutes from "./Notification.js";
+import interviewRoutes from "./Interview.js";
+import coinRoutes from "./Coin.js";
+// import Mentor from "./Mentor.js";
+import updateUserCategory  from "../controller/userCategoryController.js"; 
+import AdminRoutes from "./AdminRoutes.js";
+import {getUserById , getMentorById} from "../controller/auth.js";
+import profileRoutes from "./profile.routes.js";
+// ---------- Setup ----------
+const Router = express.Router();
 const upload = multer();
 
+// =======================================================
+// 🔹 PUBLIC ROUTES (NO AUTH)
+// =======================================================
 
-const Router = express.Router();
-
-// ✅ Health Check
-Router.get('/health-check', (req, res) => {
-  console.log("Server health check triggered");
+Router.get("/health-check", (req, res) => {
   res.json({ status: 200, message: "Server is working" });
 });
-Router.post('/verifyToken', verifyToken);
-Router.post('/enter-updateUserCategory',  updateUserCategory );
 
-// ✅ Auth routes
-Router.post('/login', LoginUser);
-Router.post('/register', RegisterUser);
-Router.post('/set-password', setPasswordForOAuthUser);
-Router.post('/oauth2/callback', GoogleAuthHandler);
-Router.get('/authUrl', getAuthUrl);
-// Router.post('/oauth2/callback', oauthCallback);
-Router.post('/check-email-connection', CheckEmailConnection);
-Router.post("/send-email", upload.single("attachment"), sendEmail);
+Router.post("/login", LoginUser);
+Router.post("/register", RegisterUser);
+Router.post("/verifytoken", verifyToken);
 
-//---------------------------------------------------------------------------------------
-//RESUME
-Router.get('/get-my-resume',  getMyResume);
-Router.get('/resume/all',  getAllResumes);
-Router.post('/resume/set-active', setActiveResume);
-Router.post('/resume/active', getActiveResume);
+Router.get("/authUrl", getAuthUrl);
+Router.post("/oauth2/callback", GoogleAuthHandler);
+Router.post("/set-password", setPasswordForOAuthUser);
+
+// =======================================================
+// 🔹 AUTHENTICATED USER ROUTES
+// =======================================================
+
+//Router.use(authenticateToken); // 🔐 everything below is protected
+
+// ---------- User ----------
+Router.get("/get-user-by-email", getUserByEmail);
+Router.post("/enter-updateUserCategory", updateUserCategory);
+Router.get("/users/:userId", getUserById);
+// Router.get("/mentors/:mentorId", getMentorById);
+// ---------- Resume ----------
+Router.get("/resume/my", getMyResume);
+Router.get("/resume/all", getAllResumes);
+Router.post("/resume/set-active", setActiveResume);
+Router.get("/resume/active", getActiveResume);
 Router.post(
-  '/upload',
+  "/resume/upload",
   uploadResumeMiddleware.single("resume"),
   uploadResume
 );
 
+// ---------- Chat ----------
+Router.get("/users", getAllUsers);
+Router.get("/chat", getChat);
+Router.post("/chat/message", sendMessage);
 
-// ✅ User and chat routes
-Router.get('/get-all-users', authenticateToken, getAllUsers);
-Router.get('/get-user-chat', authenticateToken, getChat);
-Router.post('/send-user-message', sendMessage);
-Router.post('/create-group', authenticateToken, createGroup);
-Router.get('/get-user-group', authenticateToken, getAllGroups);
-Router.post('/send-group-message', authenticateToken, sendGroupMessage);
-Router.get('/get-group-chat', authenticateToken, getGroupChat);
-Router.delete('/delete-group', authenticateToken, deleteGroup);
-Router.delete('/delete-group-message-from-me', authenticateToken, deleteMessageFromMe);
-Router.post("/save-html-template",saveTemplateByEmail);
-Router.get("/get-html-template",fetchTemplateByEmail);
-Router.get("/email-journey", getEmailThreadLogs); // Ensure this route is protected
-Router.post('/save-followup-template', saveFollowUpTemplate);
-Router.get('/fetch-followup-templates/:email', fetchFollowUpTemplate);
+Router.post("/groups", createGroup);
+Router.get("/groups", getAllGroups);
+Router.get("/groups/chat", getGroupChat);
+Router.post("/groups/message", sendGroupMessage);
+Router.delete("/groups", deleteGroup);
+Router.delete("/groups/message", deleteMessageFromMe);
 
-Router.get('/jobs', searchJobs);
-Router.get('/people', searchPeople);
-Router.get('/companies', searchCompanies);
-// Autocomplete and suggestions
-Router.get('/suggestions', getSearchSuggestions);
-Router.get('/popular', getPopularSearches);
+// ---------- Email ----------
+Router.post("/email/check-connection", CheckEmailConnection);
+Router.post("/email/send", upload.single("attachment"), sendEmail);
+Router.get("/email/logs", getEmailLogs);
+Router.get("/email/journey", getEmailThreadLogs);
+Router.get("/email/logs/all", getAllLogsByUser);
 
-Router.get("/email-logs/", getEmailLogs);
+Router.post("/email/template", saveTemplateByEmail);
+Router.get("/email/template", fetchTemplateByEmail);
 
-Router.use("/get-user-details/:email", getUserDetailsByEmail);
+// ---------- Search ----------
+Router.get("/search/jobs", searchJobs);
+Router.get("/search/people", searchPeople);
+Router.get("/search/companies", searchCompanies);
+Router.get("/search/suggestions", getSearchSuggestions);
+Router.get("/search/popular", getPopularSearches);
 
-Router.use('/mentors', Mentor);
-// ✅ Recruiter Routes
-Router.use('/recruiters', recruiterRoutes); // e.g., POST /api/recruiters/add
+// =======================================================
+// 🔹 MODULE ROUTES (ALREADY PROTECTED)
+// =======================================================
+Router.use("/profile", profileRoutes);
+Router.use("/recruiters", recruiterRoutes);
+Router.use("/jobs", jobRoutes);
+Router.use("/network", networkRoutes);
+Router.use("/notifications", notificationRoutes);
+Router.use("/interviews", interviewRoutes);
+Router.use("/coins", coinRoutes);
+// Router.use("/mentors", Mentor);
+Router.use("/Admin", AdminRoutes);
 
-// ✅ Job Routes
-Router.use('/pending-requests', getPendingRequests);
-Router.use('/requests/:userId/:role/:action', handleRequestAction);
-Router.use('/jobs', jobRoutes); // e.g., GET /api/jobs/list, POST /api/jobs/add
-// ✅ Network Routes
-Router.use('/network', networkRoutes); // e.g., POST /api/network/send-request, GET /api/network/connections
-// ✅ Notification Routes
-Router.use('/notifications', notificationRoutes); // e.g., GET /api/notifications, POST /api/notifications/mark-read
-// ✅ Interview Routes
-Router.use('/interviews', interviewRoutes); // e.g., POST /api/interviews/request, GET /api/interviews/pending
-// ✅ Coin Routes
-Router.use('/coins', coinRoutes); // e.g., GET /api/coins/balance, POST /api/coins/referral
+// =======================================================
+// ❌ FALLBACK
+// =======================================================
 
-
-Router.get('/getAllLogs', getAllLogsByUser); // e.g., POST /api/recruiters/add
-
-
-
-
-// ✅ Get user data by email
-Router.get('/get-user-by-email', authenticateToken, getUserByEmail);
-
-
-
-Router.get('/get-html-template', fetchFollowUpTemplate)
-
-// ✅ Fallback
-Router.use('*', (req, res) => {
+Router.use("*", (req, res) => {
   res.status(404).json({ error: "Requested Endpoint not Found!" });
 });
 
 export default Router;
-
-
-// https://system-backend-hprl.onrender.com/api/oauth2/callback
