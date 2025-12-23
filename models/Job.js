@@ -3,85 +3,56 @@ import mongoose from "mongoose";
 const jobSchema = new mongoose.Schema(
   {
     /* ===============================
-       👤 WHO POSTED THE JOB
-       mentor | recruiter | admin | autofetch
+       🔑 IDENTITY
     =============================== */
-
-    postedBy: {
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        default: null, // ✅ null ONLY for autofetch jobs
-      },
-
-      role: {
-        type: String,
-        enum: ["mentor", "recruiter", "admin"],
-        default: null, // ✅ null for autofetch
-        index: true,
-      },
-
-      name: {
-        type: String, // snapshot at posting time
-        default: null,
-      },
-    },
-
-    /* ===============================
-       🌐 SOURCE INFORMATION
-    =============================== */
-
-    source: {
-      type: String, 
-      enum: [
-        "LinkedIn",
-        "Naukri",
-        "Unstop",
-        "Company Career Page",
-        "Mentor",
-        "Recruiter",
-        "Admin",
-        "AutoFetch",
-      ],
-      required: true,
-      index: true,
-    },
 
     externalJobId: {
       type: String,
       unique: true,
-      sparse: true, // ✅ allows multiple nulls
+      sparse: true, // allows internal jobs later
+      index: true,
+    },
+
+    source: {
+      type: String, // LinkedIn, Indeed, Foundit, SimplyHired, etc.
+      required: true,
       index: true,
     },
 
     /* ===============================
-       🏷 BASIC JOB INFO
+       🏷 CORE JOB INFO
     =============================== */
 
     title: {
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
 
     companyName: {
       type: String,
       required: true,
       trim: true,
-    },
-
-    companyLogo: {
-      type: String,
-    },
-
-    category: {
-      type: String, // Tech, Sales, Marketing, HR, Finance
       index: true,
     },
 
-    jobType: {
+    companyLogo: {
+      type: String, // URL
+      default: null,
+    },
+
+    companyWebsite: {
       type: String,
-      enum: ["Full-Time", "Part-Time", "Internship", "Contract"],
+      default: null,
+    },
+
+    /* ===============================
+       📍 LOCATION & MODE
+    =============================== */
+
+    location: {
+      type: String, // "Mumbai, Maharashtra, India"
       index: true,
     },
 
@@ -91,32 +62,26 @@ const jobSchema = new mongoose.Schema(
       index: true,
     },
 
-    location: {
-      type: String,
-      index: true,
-    },
+    /* ===============================
+       💼 JOB TYPE
+    =============================== */
 
-    experienceLevel: {
-      type: String, // Fresher, 0-1, 1-3, 3-5, 5+
+    jobType: {
+      type: String,
+      enum: ["Full-Time", "Part-Time", "Internship", "Contract"],
       index: true,
     },
 
     /* ===============================
-       📄 JOB DETAILS (OPTIONAL)
+       📝 DESCRIPTION
     =============================== */
 
     description: {
       type: String,
     },
 
-    responsibilities: [
-      {
-        type: String,
-      },
-    ],
-
     /* ===============================
-       🧠 SKILLS (SEARCH + MATCHING)
+       🧠 SKILLS (OPTIONAL / AI LATER)
     =============================== */
 
     skills: [
@@ -129,57 +94,32 @@ const jobSchema = new mongoose.Schema(
     ],
 
     /* ===============================
-       🎓 ELIGIBILITY (OPTIONAL)
-    =============================== */
-
-    eligibility: {
-      batch: [{ type: Number }],
-      minCGPA: {
-        type: Number,
-        min: 0,
-        max: 10,
-      },
-      branchesAllowed: [{ type: String }],
-    },
-
-    /* ===============================
-       💰 SALARY / STIPEND
-    =============================== */
-
-    salary: {
-      min: { type: Number },
-      max: { type: Number },
-      currency: {
-        type: String,
-        default: "INR",
-      },
-      period: {
-        type: String,
-        enum: ["Per Annum", "Per Month"],
-        default: "Per Annum",
-      },
-    },
-
-    /* ===============================
-       🔗 APPLY & DEADLINE
+       🔗 APPLY INFO
     =============================== */
 
     applyLink: {
       type: String,
+      required: true,
     },
 
-    applicationDeadline: {
-      type: Date,
-      index: true,
+    applyType: {
+      type: String,
+      enum: ["external", "internal"],
+      default: "external",
     },
 
     /* ===============================
-       📊 STATUS & MODERATION
+       ⏱ DATES & STATUS
     =============================== */
+
+    postedAt: {
+      type: Date,
+      default: null, // many RapidAPI jobs don't have this
+    },
 
     status: {
       type: String,
-      enum: ["Open", "Closed", "Paused"],
+      enum: ["Open", "Closed"],
       default: "Open",
       index: true,
     },
@@ -189,43 +129,20 @@ const jobSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
-
-    isVerified: {
-      type: Boolean,
-      default: false, 
-      // mentor/recruiter jobs → false
-      // admin jobs → true (auto)
-    },
-
-    /* ===============================
-       📈 ANALYTICS
-    =============================== */
-
-    applicantsCount: {
-      type: Number,
-      default: 0,
-    },
-
-    clicks: {
-      type: Number,
-      default: 0,
-    },
   },
   {
-    timestamps: true,
-  }
+    timestamps: true, // createdAt, updatedAt
+  } 
 );
 
 /* ===============================
    🔍 TEXT SEARCH
 =============================== */
-
 jobSchema.index({
   title: "text",
   companyName: "text",
-  skills: "text",
   location: "text",
-  category: "text",
+  skills: "text",
 });
 
 export default mongoose.model("Job", jobSchema);

@@ -5,6 +5,8 @@ import router from './routes/Route.js';
 import cors from "cors";
 import dotenv from 'dotenv';
 import { createServer } from "http";
+import { startJobCron } from "./controller/jobs/jobCron.js";
+
 import { Server } from "socket.io";
 import User from "./models/User.js";
 
@@ -34,7 +36,10 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(bodyParser.json({ limit: '50mb' }));
 
 mongoose.connect(connectionUrl, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log("Database connected successfully"))
+    .then(() => {console.log("Database connected successfully")
+
+             startJobCron() })
+
     .catch((err) => console.error("Database connection error:", err.message));
 
 
