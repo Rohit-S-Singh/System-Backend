@@ -1,4 +1,5 @@
 // controllers/jobController.js
+import SavedJob from "../../models/SavedJob.js";
 
 import Job from "../../models/Job.js";
 
@@ -35,7 +36,7 @@ export const syncJobsFromAPI = async () => {
     console.log(`📌 Fetching jobs for: ${query}`);
 
     // 2️⃣ Call external job API
-    const response = await axios.get(
+    const response = await axios.get(   
       "https://jsearch.p.rapidapi.com/search",
       {
         params: {
@@ -43,14 +44,15 @@ export const syncJobsFromAPI = async () => {
           page: "1",
         },
         headers: {
-          "X-RapidAPI-Key": process.env.RAPID_API_KEY,
+          "X-RapidAPI-Key": '6548a50121mshedff1732deff2dap1e7044jsn2b6e8fa6d0ea',
           "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
         },
       }
     );
 
     const jobs = response.data.data || [];
-
+     console.log(jobs);
+        
     // 3️⃣ Store jobs in DB
     for (const job of jobs) {
       if (!job.job_id || !job.job_apply_link) continue;
@@ -85,6 +87,7 @@ export const syncJobsFromAPI = async () => {
     console.error("❌ Job sync failed:", error.message);
   }
 };
+
 //auto delete
 export const removeExpiredJobs = async () => {
   try {
@@ -100,59 +103,48 @@ export const removeExpiredJobs = async () => {
   }
 };
 
-
+// GET /api/jobs/random?limit=20
 export const getRandomJobs = async (req, res) => {
   try {
-    const now = new Date();
+    const limit = Number(req.query.limit) || 20;
 
     const jobs = await Job.aggregate([
-      // 1️⃣ Only valid & active jobs
       {
         $match: {
           isActive: true,
           status: "Open",
-          $or: [
-            { applicationDeadline: { $gte: now } },
-            { applicationDeadline: { $exists: false } }, // API jobs may not have deadline
-          ],
         },
       },
-
-      // 2️⃣ Randomize documents
-      { $sample: { size: 30 } },
-
-      // 3️⃣ Select only fields needed for frontend
+      {
+        $sample: { size: limit },
+      },
       {
         $project: {
+          _id: 1,
           title: 1,
           companyName: 1,
           companyLogo: 1,
           location: 1,
-          jobType: 1,
           workMode: 1,
-          category: 1,
-          skills: 1,
-          source: 1,
-          applyLink: 1,
-          applicationDeadline: 1,
+          jobType: 1,
           createdAt: 1,
         },
       },
     ]);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      count: jobs.length,
       jobs,
     });
   } catch (error) {
-    console.error("❌ Error fetching random jobs:", error.message);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Failed to fetch jobs",
     });
   }
 };
+
+
 
 
 export const getJobsBySkillMatch = async (req, res) => {
@@ -329,48 +321,79 @@ export const filterJobs = async (req, res) => {
 };
 
 
+
+//   try {
+//     const { jobId } = req.params;
+
+//     // 1️⃣ Validate jobId
+//     if (!jobId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Job ID is required",
+//       });
+//     }
+
+//     const now = new Date();
+
+//     // 2️⃣ Fetch job
+//     const job = await Job.findOne({
+//       _id: jobId,
+//       isActive: true,
+//       status: "Open",
+//       $or: [
+//         { applicationDeadline: { $gte: now } },
+//         { applicationDeadline: { $exists: false } },
+//       ],
+//     })
+//       .populate("recruiter", "name email") // optional (for recruiter jobs)
+//       .lean();
+
+//     // 3️⃣ Handle not found
+//     if (!job) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Job not found or no longer active",
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       job,
+//     });
+//   } catch (error) {
+//     console.error("❌ Job details error:", error.message);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch job details",
+//     });
+//   }
+// };
+// GET /api/jobs/:id
 export const getJobDetails = async (req, res) => {
+  
   try {
-    const { jobId } = req.params;
-
-    // 1️⃣ Validate jobId
-    if (!jobId) {
-      return res.status(400).json({
-        success: false,
-        message: "Job ID is required",
-      });
-    }
-
-    const now = new Date();
-
-    // 2️⃣ Fetch job
-    const job = await Job.findOne({
-      _id: jobId,
-      isActive: true,
-      status: "Open",
-      $or: [
-        { applicationDeadline: { $gte: now } },
-        { applicationDeadline: { $exists: false } },
-      ],
-    })
-      .populate("recruiter", "name email") // optional (for recruiter jobs)
-      .lean();
-
-    // 3️⃣ Handle not found
+  
+   const { jobId } = req.params;
+   console.log(jobId);
+   
+    const job = await Job.findById(jobId);
+    console.log(job);
+    
     if (!job) {
+      console.log("iiiiii");
+      
       return res.status(404).json({
         success: false,
-        message: "Job not found or no longer active",
+        message: "Job not found",
       });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       job,
     });
   } catch (error) {
-    console.error("❌ Job details error:", error.message);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Failed to fetch job details",
     });
@@ -494,7 +517,46 @@ export const createJob = async (req, res) => {
   }
 };
 
+/* ===============================
+   SAVE A JOB
+================================ */
+export const saveJob = async (req, res) => {
+  try {
+    const { userId, jobId } = req.body;
 
+    console.log("userId:", userId);
+    console.log("jobId:", jobId);
+
+    if (!userId || !jobId) {
+      return res.status(400).json({
+        message: "userId and jobId are required",
+      });
+    }
+
+    // Check job exists
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    const savedJob = await SavedJob.create({
+      user: userId,
+      job: jobId,
+    });
+
+    res.status(201).json({
+      message: "Job saved successfully",
+      savedJob,
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Job already saved" });
+    }
+
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 /* =====================================================
    🗑 DELETE JOB BY ID
@@ -554,5 +616,49 @@ export const deleteJobById = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+
+
+/* ===============================
+   GET ALL SAVED JOBS (FULL DETAILS)
+================================ */
+export const getSavedJobs = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const savedJobs = await SavedJob.find({ user: userId })
+      .populate("job")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      count: savedJobs.length,
+      savedJobs,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ===============================
+   REMOVE SAVED JOB
+================================ */
+export const removeSavedJob = async (req, res) => {
+  try {
+    const { userId, jobId } = req.body;
+
+    if (!userId || !jobId) {
+      return res.status(400).json({ message: "userId and jobId are required" });
+    }
+
+    await SavedJob.findOneAndDelete({
+      user: userId,
+      job: jobId,
+    });
+
+    res.status(200).json({ message: "Saved job removed" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };
