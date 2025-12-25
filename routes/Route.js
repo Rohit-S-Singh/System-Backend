@@ -57,7 +57,7 @@ import networkRoutes from "./Network.js";
 import notificationRoutes from "./Notification.js";
 import interviewRoutes from "./Interview.js";
 import coinRoutes from "./Coin.js";
-// import Mentor from "./Mentor.js";
+import Mentor from "./Mentor.js";
 import updateUserCategory  from "../controller/userCategoryController.js"; 
 import AdminRoutes from "./AdminRoutes.js";
 import {getUserById , getMentorById} from "../controller/auth.js";
@@ -92,7 +92,6 @@ Router.post("/set-password", setPasswordForOAuthUser);
 Router.get("/get-user-by-email", getUserByEmail);
 Router.post("/enter-updateUserCategory", updateUserCategory);
 Router.get("/users/:userId", getUserById);
-// Router.get("/mentors/:mentorId", getMentorById);
 // ---------- Resume ----------
 Router.get("/resume/my", getMyResume);
 Router.get("/resume/all", getAllResumes);
@@ -143,7 +142,7 @@ Router.use("/network", networkRoutes);
 Router.use("/notifications", notificationRoutes);
 Router.use("/interviews", interviewRoutes);
 Router.use("/coins", coinRoutes);
-// Router.use("/mentors", Mentor);
+Router.use("/mentors", Mentor);
 Router.use("/Admin", AdminRoutes);
 
 // =======================================================
