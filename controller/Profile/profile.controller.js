@@ -13,18 +13,8 @@ export const getProfileByUserId = async (req, res) => {
     console.log("Fetching profile for userId:", userId);
     // Try to find the profile
     let profile = await UserProfile.findOne({ userId });
-     console.log("****************enter here**********************************");
-     console.log("****************enter here**********************************");
-     console.log("****************enter here**********************************");
-     console.log("****************enter here**********************************");
-       console.log("Profile found:", profile);
- console.log("****************enter here**********************************");
- console.log("****************enter here**********************************");
- console.log("****************enter here**********************************");
- console.log("****************enter here**********************************");
- console.log("****************enter here**********************************");
-
-
+   
+   
     // If profile doesn't exist, create one with default/empty values
     if (!profile) {
  
@@ -377,6 +367,84 @@ export const setupProfile = async (req, res) => {
     });
   }
 };
+
+
+
+// controllers/profile.controller.js
+
+export const updateUserProfile = async (req, res) => {
+  console.log("222222222222222222222222222222222222");
+  
+  try {
+    const { userId, ...updateData } = req.body;
+
+    // ❌ userId is mandatory
+    if (!userId) {
+        console.log("222222222222222222222222222222222222");
+
+      return res.status(400).json({
+        success: false,
+        message: "userId is required"
+      });
+    }
+
+    /**
+     * 🔒 Prevent updating restricted fields
+     */
+    delete updateData._id;
+    delete updateData.email;
+    delete updateData.stats;
+
+    /**
+     * 🧠 Normalize skills if needed
+     */
+    if (updateData.details?.skills && typeof updateData.details.skills === "string") {
+      updateData.details.skills = updateData.details.skills
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    /**
+     * 🧩 Update profile using userId from body
+     */
+    const updatedProfile = await UserProfile.findOneAndUpdate(
+      { userId },
+      { $set: updateData },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!updatedProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "User profile not found"
+      });
+    }
+      console.log("1111111111111111111111111")
+
+    return res.status(200).json({
+      
+      success: true,
+      message: "Profile updated successfully",
+      profile: updatedProfile
+    });
+
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update profile",
+      error: error.message
+    });
+  }
+};
+
+
+
 
 // /**
 //  * @route   GET /api/profile/:userId
