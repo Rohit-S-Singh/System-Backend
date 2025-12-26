@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import User from "../models/User.js";
-
+import UserProfile from "../models/profile/UserProfile.js";
 dotenv.config();
 
 const secretKey = process.env.JWT_SECRET;
@@ -26,7 +26,7 @@ const verifyToken = async (req, res) => {
 
     // ✅ USE userId (matches login token)
     const user = await User.findById(decoded.userId).lean();
-
+    const userProfile = await UserProfile.findOne({ userId: decoded.userId }).lean();
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -42,6 +42,7 @@ const verifyToken = async (req, res) => {
       success: true,
       message: "Token verified successfully",
       user,
+      userProfile
     });
   } catch (error) {
     console.error("❌ Token verification error:", error);

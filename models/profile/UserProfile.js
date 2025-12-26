@@ -2,31 +2,28 @@ import mongoose from "mongoose";
 
 const ExperienceSchema = new mongoose.Schema({
   company: { type: String, required: true },
-  logo: { type: String }, // optional company logo
+  logo: { type: String },
   role: { type: String, required: true },
   duration: { type: String, required: true },
   location: { type: String },
-  points: { type: [String], default: [] }, // achievements or responsibilities
+  points: { type: [String], default: [] },
   current: { type: Boolean, default: false },
-  teamSize: { type: Number }, // number of team members
-  technologies: { type: [String], default: [] }, // tech stack used
-  description: { type: String } // detailed description
+  teamSize: { type: Number },
+  technologies: { type: [String], default: [] },
+  description: { type: String }
 }, { _id: false });
 
 const ProjectSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  desc: { type: String }, // description of project
-  tech: { type: [String], default: [] }, // technologies used
+  desc: { type: String },
+  tech: { type: [String], default: [] },
   status: { type: String, enum: ["live", "development"], default: "development" },
   featured: { type: Boolean, default: false },
-  githubLink: { type: String }, // optional GitHub link
-  deployedLink: { type: String }, // optional live/deployed link
-  teamSize: { type: Number }, // number of contributors
-  responsibilities: { type: [String], default: [] } // what user did in the project
+  githubLink: { type: String },
+  deployedLink: { type: String },
+  teamSize: { type: Number },
+  responsibilities: { type: [String], default: [] }
 }, { _id: false });
-
-
-
 
 const UserProfileSchema = new mongoose.Schema(
   {
@@ -35,23 +32,25 @@ const UserProfileSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       unique: true,
-      ref: "User" // Auth/User collection
+      ref: "User"
     },
 
     /** 👤 USER TYPE (asked during onboarding) */
     userType: {
       type: String,
-      enum: ["student", "working_professional"],
-      required: true
+      enum: ["student", "working_professional", "None"],
+      default: "None"
     },
 
-    name: { type: String, required: true },
+    /** 📋 BASIC INFO */
+    name: { type: String },
     email: { type: String, required: true, unique: true },
     phone: String,
     picture: String,
     coverImage: String,
     bio: String,
 
+    /** 📊 STATS */
     stats: {
       profileViews: { type: Number, default: 0 },
       connections: { type: Number, default: 0 },
@@ -59,28 +58,64 @@ const UserProfileSchema = new mongoose.Schema(
       projects: { type: Number, default: 0 }
     },
 
-    details: {
+    /** 💼 PROFESSIONAL DETAILS (for working_professional) */
+    professionalDetails: {
       company: String,
+      companyWebsite: String,
       logo: String,
-      title: String,
+      jobTitle: String,
+      department: String,
       experience: String,
-      location: String,
-      ctc: String,
+      currentCTC: String,
       expectedCTC: String,
-      notice: String,
+      noticePeriod: String,
+      careerLevel: {
+        type: String,
+        enum: ["intern", "entry", "mid", "senior", "lead", "executive"]
+      },
       workMode: {
         type: String,
-        enum: ["Remote", "Hybrid", "Onsite", ""]
+        enum: ["remote", "hybrid", "onsite"]
       },
+      preferredJobRole: String,
+      preferredLocations: [String]
+    },
+
+    /** 🎓 STUDENT DETAILS (for student) */
+    studentDetails: {
+      college: String,
+      collegeWebsite: String,
+      university: String,
+      degree: String,
+      branch: String,
+      year: String,
+      graduationYear: String,
+      currentCGPA: String,
+      tenthPercentage: String,
+      twelfthPercentage: String,
+      careerInterest: String,
+      preferredJobRole: String,
+      preferredLocations: [String]
+    },
+
+    /** 🔗 COMMON DETAILS */
+    details: {    
+      location: String,
       skills: [String],
       github: String,
       linkedin: String,
-      portfolio: String
+      portfolio: String,
+      leetcode: String,
+      codeforces: String
     },
 
+    /** 💼 EXPERIENCE */
     experience: [ExperienceSchema],
+
+    /** 🚀 PROJECTS */
     projects: [ProjectSchema],
 
+    /** 🏆 CERTIFICATIONS */
     certs: [
       {
         name: String,
@@ -90,6 +125,7 @@ const UserProfileSchema = new mongoose.Schema(
       }
     ],
 
+    /** 🌟 ACHIEVEMENTS */
     achievements: [
       {
         title: String,
@@ -98,6 +134,7 @@ const UserProfileSchema = new mongoose.Schema(
       }
     ],
 
+    /** 💬 RECOMMENDATIONS */
     recommendations: [
       {
         name: String,
@@ -109,5 +146,10 @@ const UserProfileSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Indexes for better query performance
+UserProfileSchema.index({ userId: 1 });
+UserProfileSchema.index({ email: 1 });
+UserProfileSchema.index({ userType: 1 });
 
 export default mongoose.model("UserProfile", UserProfileSchema);
