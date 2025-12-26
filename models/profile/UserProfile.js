@@ -99,7 +99,7 @@ const UserProfileSchema = new mongoose.Schema(
     },
 
     /** 🔗 COMMON DETAILS */
-    details: {
+    details: {    
       location: String,
       skills: [String],
       github: String,
