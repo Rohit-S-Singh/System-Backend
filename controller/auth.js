@@ -263,9 +263,96 @@ export const GoogleAuthHandler = async (req, res) => {
   }
 };
 
+// export const RegisterUser = async (req, res) => {
+//   try {
+//     const { userName, email, password } = req.body;
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+//      console.log(req.body);
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+ 
+//     // 🔒 Validation
+//     if (!email || !password) {
+//       return res.status(400).json({
+//         errorMessage: "Email and password are required",
+//       });
+//     }
+
+//     if (password.length < 8) {
+//       return res.status(400).json({
+//         errorMessage: "Password must be at least 8 characters",
+//       });
+//     }
+
+//     // 🔍 Check existing user
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(409).json({
+//         errorMessage: "Email already registered",
+//       });
+//     }
+
+//     // 🔐 Hash password
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     // 🎯 Mentor logic
+//     let isMentor = false;
+//     let mentorStatus = "Become a Mentor";
+
+//     if (accountType === "Mentor Account") {
+//       isMentor = true;
+//       mentorStatus = "Pending";
+//     }
+
+//     // 🧠 Create user (ONLY schema fields)
+//     const user = await User.create({
+//       name: userName,
+//       email,
+//       password: hashedPassword,
+
+//       isMentor,
+//       mentorStatus,
+
+//       online: false,
+//       hasCoinAccount: false,
+//       referralCode: uuidv4().slice(0, 8),
+
+//       notificationSettings: {
+//         emailNotifications: true,
+//         pushNotifications: true,
+//         connectionRequests: true,
+//         messages: true,
+//         jobUpdates: true,
+//       },
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "User registered successfully",
+//       user: {
+//         id: user._id,
+//         email: user.email,
+//         isMentor: user.isMentor,
+//         mentorStatus: user.mentorStatus,
+//         userType: user.userType,
+//       },
+//     });
+
+//   } catch (error) {
+//     console.error("Register Error:", error);
+//     return res.status(500).json({
+//       errorMessage: "Server error during registration",
+//     });
+//   }
+// };
+
+
 export const RegisterUser = async (req, res) => {
   try {
-    const { userName, email, password, accountType } = req.body;
+    const { userName, email, password } = req.body;
 
     // 🔒 Validation
     if (!email || !password) {
@@ -291,35 +378,15 @@ export const RegisterUser = async (req, res) => {
     // 🔐 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🎯 Mentor logic
-    let isMentor = false;
-    let mentorStatus = "Become a Mentor";
-
-    if (accountType === "Mentor Account") {
-      isMentor = true;
-      mentorStatus = "Pending";
-    }
-
     // 🧠 Create user (ONLY schema fields)
     const user = await User.create({
       name: userName,
       email,
       password: hashedPassword,
-
-      isMentor,
-      mentorStatus,
-
-      online: false,
-      hasCoinAccount: false,
-      referralCode: uuidv4().slice(0, 8),
-
-      notificationSettings: {
-        emailNotifications: true,
-        pushNotifications: true,
-        connectionRequests: true,
-        messages: true,
-        jobUpdates: true,
-      },
+      role: "user",          // default but explicit
+      userType: "None",      // schema default
+      mentorStatus: "None",  // schema default
+      recruiterStatus: "None"
     });
 
     return res.status(200).json({
@@ -327,10 +394,11 @@ export const RegisterUser = async (req, res) => {
       message: "User registered successfully",
       user: {
         id: user._id,
+        name: user.name,
         email: user.email,
-        isMentor: user.isMentor,
-        mentorStatus: user.mentorStatus,
+        role: user.role,
         userType: user.userType,
+        mentorStatus: user.mentorStatus,
       },
     });
 
@@ -342,74 +410,6 @@ export const RegisterUser = async (req, res) => {
   }
 };
 
-
-
-// export const RegisterUser = async (req, res) => {
-
-//   console.log(req);
-  
-//   const { name, email, password, phone } = req.body;
-//   const { error } = registerSchemaValidation.validate({ name, email, password, phone });
-
-//   if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
-
-//   try {
-//     const ifExist = await User.findOne({ email });
-//     if (ifExist) return res.json({ success: false, message: "User Already Exists" });
-
-//     const hashedPassword = await hash(password, 12);
-//     await User.create({ email, name, password: hashedPassword, phone });
-
-//     return res.json({ success: true, message: "Account created successfully" });
-//   } catch (error) {
-//     console.error("RegisterUser error:", error);
-//     return res.json({ success: false, message: "Something went wrong" });
-//   }
-// };
-
-// export const LoginUser = async (req, res) => {
-//   const { email, password } = req.body;
-//   const { error } = LoginschemaValidation.validate({ email, password });
-
-//   if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
-
-//   try {
-//     const checkUser = await User.findOne({ email });
-//     if (!checkUser) return res.json({ success: false, message: "Account not found" });
-
-//     // Check if user has a password set (OAuth users might not have password)
-//     if (!checkUser.password) {
-//       return res.json({ 
-//         success: false, 
-//         message: "Please set a password to login. You previously signed in using OAuth.",
-//         requiresPasswordSetup: true,
-//         email: checkUser.email
-//       });
-//     }
-
-//     const isMatch = await compare(password, checkUser.password);
-//     if (!isMatch) return res.json({ success: false, message: "Incorrect password" });
-
-//     const token = jwt.sign({ id: checkUser._id, email: checkUser.email }, JWT_SECRET, { expiresIn: '1d' });
-
-//     return res.json({ 
-//       token, 
-//       username: email,
-//       id: checkUser._id,
-//       user: {
-//         id: checkUser._id,
-//         email: checkUser.email,
-//         name: checkUser.name,
-//         givenName: checkUser.givenName,
-//         familyName: checkUser.familyName,
-//         picture: checkUser.picture
-//       }
-//     });
-//   } catch (error) {
-//     console.error("LoginUser error:", error);
-//     return res.json({ success: false, message: "Something went wrong" });
-//   }
-// };
 
 export const LoginUser = async (req, res) => {
   try {

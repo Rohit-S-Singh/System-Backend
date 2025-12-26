@@ -62,6 +62,7 @@ import updateUserCategory  from "../controller/userCategoryController.js";
 import AdminRoutes from "./AdminRoutes.js";
 import {getUserById , getMentorById} from "../controller/auth.js";
 import profileRoutes from "./profile.routes.js";
+import {setupProfile} from "../controller/Profile/profile.controller.js";
 // ---------- Setup ----------
 const Router = express.Router();
 const upload = multer();
@@ -89,6 +90,7 @@ Router.post("/set-password", setPasswordForOAuthUser);
 //Router.use(authenticateToken); // 🔐 everything below is protected
 
 // ---------- User ----------
+Router.post("/first-time-details-fill", setupProfile);
 Router.get("/get-user-by-email", getUserByEmail);
 Router.post("/enter-updateUserCategory", updateUserCategory);
 Router.get("/users/:userId", getUserById);
