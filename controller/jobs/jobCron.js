@@ -7,7 +7,7 @@ import {
 
 export const startJobCron = () => {
   // ⏰ Every 10 minutes
-  cron.schedule("*/10 * * * *", async () => {
+  cron.schedule("* * * * *", async () => {
     console.log("⏰ Cron triggered");
 
     await syncJobsFromAPI();

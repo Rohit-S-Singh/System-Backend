@@ -539,32 +539,32 @@ export const getMentorList = async (req, res) => {
 };
 
 
-export const getMentorDetails = async (req, res) => {
-  try {
-    const { mentorId } = req.params;
+// export const getMentorDetails = async (req, res) => {
+//   try {
+//     const { mentorId } = req.params;
 
-    const mentor = await Mentor.findById(mentorId)
-      .populate("user", "name email picture");
+//     const mentor = await Mentor.findById(mentorId)
+//       .populate("user", "name email picture");
 
-    if (!mentor) {
-      return res.status(404).json({
-        success: false,
-        message: "Mentor not found",
-      });
-    }
+//     if (!mentor) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Mentor not found",
+//       });
+//     }
 
-    return res.status(200).json({
-      success: true,
-      mentor,
-    });
-  } catch (error) {
-    console.error("Get Mentor Details Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch mentor details",
-    });
-  }
-};
+//     return res.status(200).json({
+//       success: true,
+//       mentor,
+//     });
+//   } catch (error) {
+//     console.error("Get Mentor Details Error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch mentor details",
+//     });
+//   }
+// };
 
 
 

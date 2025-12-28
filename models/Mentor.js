@@ -3,19 +3,58 @@ import mongoose from "mongoose";
 
 const MentorSchema = new mongoose.Schema(
   {
-    user: {
+    /* ===============================
+       USER LINK
+    =============================== */
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
       required: true,
       unique: true
     },
 
+    /* ===============================
+       PERSONAL DETAILS
+    =============================== */
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true
+    },
+
+    phone: {
+      type: String,
+      required: true
+    },
+
+    avatar: {
+      type: String
+    },
+
+    /* ===============================
+       ACCOUNT STATUS
+    =============================== */
     status: {
       type: String,
       enum: ["pending", "active", "inactive", "suspended"],
-      default: "active" // ✅ avoids booking issues
+      default: "pending"
     },
 
+    approvedByAdmin: {
+      type: Boolean,
+      default: false
+    },
+
+    /* ===============================
+       PROFESSIONAL DETAILS
+    =============================== */
     expertise: {
       type: [String],
       required: true
@@ -30,7 +69,6 @@ const MentorSchema = new mongoose.Schema(
       type: String
     },
 
-    // ✅ Matches frontend (pricePerHour)
     pricePerHour: {
       type: Number,
       required: true
@@ -50,23 +88,19 @@ const MentorSchema = new mongoose.Schema(
       }
     ],
 
-    /* =====================================================
-       SIMPLE AVAILABILITY (USED BY FRONTEND UI)
-    ===================================================== */
+    /* ===============================
+       AVAILABILITY
+    =============================== */
     availability: {
       type: String,
       enum: ["Available", "Busy"],
       default: "Available"
     },
 
-    /* =====================================================
-       SLOT-BASED AVAILABILITY (FOR FUTURE USE)
-    ===================================================== */
     availabilitySlots: [
       {
         day: {
-          type: String, // Monday, Tuesday, etc.
-          required: true
+          type: String
         },
         slots: [
           {
@@ -76,12 +110,58 @@ const MentorSchema = new mongoose.Schema(
       }
     ],
 
+    timezone: {
+      type: String,
+      default: "Asia/Kolkata"
+    },
+
+    /* ===============================
+       🔥 SCHEDULED INTERVIEWS (NEW)
+    =============================== */
+    scheduledInterviews: [
+      {
+        interviewId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "interviews"
+        },
+
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "users",
+          required: true
+        },
+
+        date: {
+          type: Date,
+          required: true
+        },
+
+        startTime: {
+          type: String, // "10:00"
+          required: true
+        },
+
+        endTime: {
+          type: String, // "11:00"
+          required: true
+        },
+
+        status: {
+          type: String,
+          enum: ["scheduled", "completed", "cancelled", "no_show"],
+          default: "scheduled"
+        }
+      }
+    ],
+
+    /* ===============================
+       METRICS
+    =============================== */
     rating: {
       type: Number,
       default: 4.5
     },
 
-    // ✅ Matches frontend (completedInterviews)
     completedInterviews: {
       type: Number,
       default: 0
@@ -90,6 +170,11 @@ const MentorSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: true
+    },
+
+    isDeleted: {
+      type: Boolean,
+      default: false
     }
   },
   { timestamps: true }
