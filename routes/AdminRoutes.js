@@ -1,6 +1,6 @@
 import express from 'express';
 import User from '../models/User.js';
-import {getPendingRequests ,handleUserRequest} from '../controller/Admin/AdminController.js';
+import {getPendingRequests ,handleUserRequest ,getAllUsers} from '../controller/Admin/AdminController.js';
 
 const Router = express.Router();
 
@@ -12,7 +12,6 @@ Router.post(
   "/requests/:userId/:role/:action",
   handleUserRequest
 );
-// Router.get('/accept', getTransactionHistory);
-// Router.get('/decline', getTransactionHistory);
+Router.get('/users', getAllUsers);
 
 export default Router
