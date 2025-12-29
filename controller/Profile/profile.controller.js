@@ -1,10 +1,7 @@
 
 import UserProfile from "../../models/profile/UserProfile.js";
 import User from "../../models/User.js";
-/**
- * Fetch profile using userId
- * userId comes from frontend (already authenticated)
- */
+
 export const getProfileByUserId = async (req, res) => {
         console.log("Fetching profile for userId:");
 
@@ -72,10 +69,7 @@ export const getProfileByUserId = async (req, res) => {
     });
   }
 };
-/**
- * UPDATE profile using userId
- * userId is User._id
- */
+
 export const updateProfileByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -107,15 +101,6 @@ export const updateProfileByUserId = async (req, res) => {
   }
 };
 
-
-
-
-
-/**
- * @desc    Create or Update Student / Professional Profile
- * @route   POST /api/profile
- * @access  Public (or Private depending on auth)
- */
 export const upsertProfile = async (req, res) => {
   try {
     const { userId, userType } = req.body;
@@ -241,18 +226,6 @@ export const upsertProfile = async (req, res) => {
   }
 };
 
-
-
-
-
-
-/**
- * @route   POST /api/profile/setup
- * @desc    Create or update user profile during onboarding
- * @access  Private
- */
-
-
 export const setupProfile = async (req, res) => {
   console.log("setupProfile called with body:", req.body);
 
@@ -369,9 +342,6 @@ export const setupProfile = async (req, res) => {
 };
 
 
-
-// controllers/profile.controller.js
-
 export const updateUserProfile = async (req, res) => {
   console.log("222222222222222222222222222222222222");
   
@@ -446,242 +416,3 @@ export const updateUserProfile = async (req, res) => {
 
 
 
-// /**
-//  * @route   GET /api/profile/:userId
-//  * @desc    Get user profile by userId
-//  * @access  Private
-//  */
-// export const getProfile = async (req, res) => {
-//   try {
-//     const { userId } = req.params;
-
-//     const profile = await UserProfile.findOne({ userId });
-
-//     if (!profile) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Profile not found",
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       data: profile,
-//     });
-//   } catch (error) {
-//     console.error("Error in getProfile:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error while fetching profile",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// /**
-//  * @route   GET /api/profile/me
-//  * @desc    Get current user's profile
-//  * @access  Private
-//  */
-// export const getMyProfile = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-
-//     const profile = await UserProfile.findOne({ userId });
-
-//     if (!profile) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Profile not found",
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       data: profile,
-//     });
-//   } catch (error) {
-//     console.error("Error in getMyProfile:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error while fetching profile",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// /**
-//  * @route   PUT /api/profile/update
-//  * @desc    Update user profile
-//  * @access  Private
-//  */
-// export const updateProfile = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-//     const updates = req.body;
-
-//     const profile = await UserProfile.findOne({ userId });
-
-//     if (!profile) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Profile not found",
-//       });
-//     }
-
-//     // Update allowed fields
-//     const allowedUpdates = [
-//       "name",
-//       "phone",
-//       "picture",
-//       "coverImage",
-//       "bio",
-//       "details",
-//       "experience",
-//       "projects",
-//       "certs",
-//       "achievements",
-//       "recommendations",
-//     ];
-
-//     // Add type-specific fields
-//     if (profile.userType === "student") {
-//       allowedUpdates.push("studentDetails");
-//     } else {
-//       allowedUpdates.push("professionalDetails");
-//     }
-
-//     allowedUpdates.forEach((field) => {
-//       if (updates[field] !== undefined) {
-//         profile[field] = updates[field];
-//       }
-//     });
-
-//     await profile.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Profile updated successfully",
-//       data: profile,
-//     });
-//   } catch (error) {
-//     console.error("Error in updateProfile:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error while updating profile",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// /**
-//  * @route   POST /api/profile/experience
-//  * @desc    Add experience to profile
-//  * @access  Private
-//  */
-// export const addExperience = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-//     const experienceData = req.body;
-
-//     const profile = await UserProfile.findOne({ userId });
-
-//     if (!profile) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Profile not found",
-//       });
-//     }
-
-//     profile.experience.push(experienceData);
-//     await profile.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Experience added successfully",
-//       data: profile,
-//     });
-//   } catch (error) {
-//     console.error("Error in addExperience:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error while adding experience",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// /**
-//  * @route   POST /api/profile/project
-//  * @desc    Add project to profile
-//  * @access  Private
-//  */
-// export const addProject = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-//     const projectData = req.body;
-
-//     const profile = await UserProfile.findOne({ userId });
-
-//     if (!profile) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Profile not found",
-//       });
-//     }
-
-//     profile.projects.push(projectData);
-//     profile.stats.projects = profile.projects.length;
-//     await profile.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Project added successfully",
-//       data: profile,
-//     });
-//   } catch (error) {
-//     console.error("Error in addProject:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error while adding project",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// /**
-//  * @route   PUT /api/profile/stats/view
-//  * @desc    Increment profile views
-//  * @access  Public
-//  */
-// export const incrementProfileView = async (req, res) => {
-//   try {
-//     const { userId } = req.body;
-
-//     const profile = await UserProfile.findOneAndUpdate(
-//       { userId },
-//       { $inc: { "stats.profileViews": 1 } },
-//       { new: true }
-//     );
-
-//     if (!profile) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Profile not found",
-//       });
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Profile view incremented",
-//       views: profile.stats.profileViews,
-//     });
-//   } catch (error) {
-//     console.error("Error in incrementProfileView:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Server error",
-//       error: error.message,
-//     });
-//   }
-// };

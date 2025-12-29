@@ -160,3 +160,47 @@ export const handleUserRequest = async (req, res) => {
     });
   }
 };
+
+
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      role,
+      userType,
+      mentorStatus,
+      recruiterStatus,
+    } = req.query;
+
+    const filter = {};
+
+    if (role) filter.role = role;
+    if (userType) filter.userType = userType;
+    if (mentorStatus) filter.mentorStatus = mentorStatus;
+    if (recruiterStatus) filter.recruiterStatus = recruiterStatus;
+
+    const users = await User.find(filter)
+      .select("-password")
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
+    const totalUsers = await User.countDocuments(filter);
+
+    return res.status(200).json({
+      success: true,
+      totalUsers,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalUsers / limit),
+      users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+    });
+  }
+};
