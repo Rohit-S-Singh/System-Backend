@@ -6,6 +6,128 @@ import User from "../../models/User.js";
 
 import mongoose from "mongoose";
 
+// export const requestBecomeMentor = async (req, res) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   try {
+//     const {
+//       userId,
+//       name,
+//       email,
+//       phone,
+//       avatar,
+//       expertise,
+//       experience,
+//       bio,
+//       pricePerHour,
+//       interviewTypes
+//     } = req.body;
+
+//     /* ===============================
+//        BASIC VALIDATION
+//     =============================== */
+//     if (!userId || !name || !email || !phone || !expertise || !experience || !pricePerHour) {
+//       await session.abortTransaction();
+//       return res.status(400).json({ message: "Missing required fields" });
+//     }
+
+//     /* ===============================
+//        PREVENT DUPLICATE MENTOR
+//     =============================== */
+//     const existingMentor = await Mentor.findOne({ userId }).session(session);
+//     if (existingMentor) {
+//       await session.abortTransaction();
+//       return res.status(400).json({
+//         message: "Mentor already exists or request already submitted"
+//       });
+//     }
+
+//     /* ===============================
+//        PREVENT MULTIPLE PENDING REQUESTS
+//     =============================== */
+//     const existingRequest = await PendingMentorRequest.findOne({
+//       userId,
+//       status: "pending"
+//     }).session(session);
+
+//     if (existingRequest) {
+//       await session.abortTransaction();
+//       return res.status(400).json({
+//         message: "Mentor request is already pending approval"
+//       });
+//     }
+
+//     /* ===============================
+//        1️⃣ CREATE MENTOR (PENDING)
+//     =============================== */
+//     const mentor = await Mentor.create(
+//       [{
+//         userId,
+//         name,
+//         email,
+//         phone,
+//         avatar,
+//         expertise,
+//         experience,
+//         bio,
+//         pricePerHour,
+//         interviewTypes,
+//         status: "pending",
+//         approvedByAdmin: false
+//       }],
+//       { session }
+//     );
+
+//     /* ===============================
+//        2️⃣ CREATE PENDING REQUEST
+//     =============================== */
+//     await PendingMentorRequest.create(
+//       [{
+//         userId,
+//         mentorId: mentor[0]._id,
+//         status: "pending"
+//       }],
+//       { session }
+//     );
+
+//     /* ===============================
+//        3️⃣ UPDATE USER STATUS
+//     =============================== */
+//     const updatedUser = await User.findByIdAndUpdate(
+//       userId,
+//       { mentorStatus: "pending" },
+//       { new: true, session }
+//     );
+
+//     if (!updatedUser) {
+//       throw new Error("User not found");
+//     }
+
+//     /* ===============================
+//        COMMIT TRANSACTION
+//     =============================== */
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     return res.status(200).json({
+//       message: "Mentor request submitted successfully. Await admin approval.",
+//       mentorId: mentor[0]._id
+//     });
+
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+
+//     console.error("Become mentor error:", error);
+//     return res.status(500).json({
+//       message: "Failed to submit mentor request"
+//     });
+//   }
+// };
+
+
+
 export const requestBecomeMentor = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -24,12 +146,39 @@ export const requestBecomeMentor = async (req, res) => {
       interviewTypes
     } = req.body;
 
+console.log("----==========================================================================-------------------");
+
+    console.log(userId,
+      name,
+      email,
+      phone,
+      avatar,
+      expertise,
+      experience,
+      bio,
+      pricePerHour,
+      interviewTypes)
+
+console.log("----==========================================================================-------------------");
+
+
+
     /* ===============================
        BASIC VALIDATION
     =============================== */
-    if (!userId || !name || !email || !phone || !expertise || !experience || !pricePerHour) {
+    if (
+      !userId ||
+      !name ||
+      !email ||
+      !phone ||
+      !Array.isArray(expertise) ||
+      expertise.length === 0 ||
+      experience === undefined ||
+      pricePerHour === undefined
+    ) {
       await session.abortTransaction();
-      return res.status(400).json({ message: "Missing required fields" });
+      session.endSession();
+      return res.status(400).json({ message: "Missing or invalid required fields" });
     }
 
     /* ===============================
@@ -38,6 +187,7 @@ export const requestBecomeMentor = async (req, res) => {
     const existingMentor = await Mentor.findOne({ userId }).session(session);
     if (existingMentor) {
       await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({
         message: "Mentor already exists or request already submitted"
       });
@@ -48,51 +198,56 @@ export const requestBecomeMentor = async (req, res) => {
     =============================== */
     const existingRequest = await PendingMentorRequest.findOne({
       userId,
-      status: "Pending"
+      status: "pending" // ✅ FIXED
     }).session(session);
 
     if (existingRequest) {
       await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({
         message: "Mentor request is already pending approval"
       });
     }
 
     /* ===============================
-       1️⃣ CREATE MENTOR (PENDING)
+       CREATE MENTOR (PENDING)
     =============================== */
     const mentor = await Mentor.create(
-      [{
-        userId,
-        name,
-        email,
-        phone,
-        avatar,
-        expertise,
-        experience,
-        bio,
-        pricePerHour,
-        interviewTypes,
-        status: "pending",
-        approvedByAdmin: false
-      }],
+      [
+        {
+          userId,
+          name,
+          email,
+          phone,
+          avatar,
+          expertise,
+          experience,
+          bio,
+          pricePerHour,
+          interviewTypes,
+          status: "pending",
+          approvedByAdmin: false
+        }
+      ],
       { session }
     );
 
     /* ===============================
-       2️⃣ CREATE PENDING REQUEST
+       CREATE PENDING REQUEST
     =============================== */
     await PendingMentorRequest.create(
-      [{
-        userId,
-        mentorId: mentor[0]._id,
-        status: "pending"
-      }],
+      [
+        {
+          userId,
+          mentorId: mentor[0]._id,
+          status: "pending"
+        }
+      ],
       { session }
     );
 
     /* ===============================
-       3️⃣ UPDATE USER STATUS
+       UPDATE USER STATUS
     =============================== */
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -125,6 +280,8 @@ export const requestBecomeMentor = async (req, res) => {
     });
   }
 };
+
+
 
 export const getApprovedActiveMentors = async (req, res) => {
   
