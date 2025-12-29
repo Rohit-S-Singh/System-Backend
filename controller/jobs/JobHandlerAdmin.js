@@ -22,27 +22,86 @@ export const JOB_QUERIES = [
 ];
 
 //auto fetch
+// export const syncJobsFromAPI = async () => {
+//   try {
+//     console.log("🔄 Job sync started");
+
+//     // 1️⃣ Get last used query index
+//     let state = await JobSyncState.findOne();
+//     if (!state) state = await JobSyncState.create({});
+
+//     const queryIndex = state.lastQueryIndex;
+//     const query = JOB_QUERIES[queryIndex];
+
+//     console.log(`📌 Fetching jobs for: ${query}`);
+
+//     // 2️⃣ Call external job API
+//     const response = await axios.get(   
+//       "https://jsearch.p.rapidapi.com/search",
+//       {
+//         params: {
+//           query,
+//           page: "1",
+//         },
+//         headers: {
+//           "X-RapidAPI-Key": '6548a50121mshedff1732deff2dap1e7044jsn2b6e8fa6d0ea',
+//           "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
+//         },
+//       }
+//     );
+
+//     const jobs = response.data.data || [];
+//      console.log(jobs);
+        
+//     // 3️⃣ Store jobs in DB
+//     for (const job of jobs) {
+//       if (!job.job_id || !job.job_apply_link) continue;
+
+//       const deadline = job.job_offer_expiration_datetime
+//         ? new Date(job.job_offer_expiration_datetime)
+//         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+//       await Job.updateOne(
+//         { externalJobId: job.job_id },
+//         {
+//           $setOnInsert: {
+//             title: job.job_title,
+//             companyName: job.employer_name,
+//             location: job.job_city || job.job_country,
+//             jobType: job.job_employment_type,
+//             source: "JSearch",
+//             applyUrl: job.job_apply_link,
+//             deadline,
+//           },
+//         },
+//         { upsert: true }
+//       );
+//     }
+
+//     // 4️⃣ Update query index for next run
+//     state.lastQueryIndex = (queryIndex + 1) % JOB_QUERIES.length;
+//     await state.save();
+
+//     console.log("✅ Job sync completed");
+//   } catch (error) {
+//     console.error("❌ Job sync failed:", error.message);
+//   }
+// };
+
 export const syncJobsFromAPI = async () => {
   try {
     console.log("🔄 Job sync started");
 
-    // 1️⃣ Get last used query index
     let state = await JobSyncState.findOne();
-    if (!state) state = await JobSyncState.create({});
+    if (!state) state = await JobSyncState.create({ lastQueryIndex: 0 });
 
-    const queryIndex = state.lastQueryIndex;
-    const query = JOB_QUERIES[queryIndex];
-
+    const query = JOB_QUERIES[state.lastQueryIndex];
     console.log(`📌 Fetching jobs for: ${query}`);
 
-    // 2️⃣ Call external job API
-    const response = await axios.get(   
+    const response = await axios.get(
       "https://jsearch.p.rapidapi.com/search",
       {
-        params: {
-          query,
-          page: "1",
-        },
+        params: { query, page: "1" },
         headers: {
           "X-RapidAPI-Key": '6548a50121mshedff1732deff2dap1e7044jsn2b6e8fa6d0ea',
           "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
@@ -50,43 +109,87 @@ export const syncJobsFromAPI = async () => {
       }
     );
 
-    const jobs = response.data.data || [];
-     console.log(jobs);
-        
-    // 3️⃣ Store jobs in DB
+    const jobs = response.data?.data || [];
+    console.log(`📦 Jobs received: ${jobs.length}`);
+
     for (const job of jobs) {
       if (!job.job_id || !job.job_apply_link) continue;
 
-      const deadline = job.job_offer_expiration_datetime
-        ? new Date(job.job_offer_expiration_datetime)
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const jobType =
+        job.job_employment_types?.includes("FULLTIME")
+          ? "Full-Time"
+          : job.job_employment_types?.includes("PARTTIME")
+          ? "Part-Time"
+          : job.job_employment_types?.includes("INTERN")
+          ? "Internship"
+          : "Contract";
 
       await Job.updateOne(
         { externalJobId: job.job_id },
         {
-          $setOnInsert: {
+          $set: {
             title: job.job_title,
             companyName: job.employer_name,
-            location: job.job_city || job.job_country,
-            jobType: job.job_employment_type,
-            source: "JSearch",
-            applyUrl: job.job_apply_link,
-            deadline,
+            companyLogo: job.employer_logo || null,
+            companyWebsite: job.employer_website || null,
+            publisher: job.job_publisher || null,
+
+            location: job.job_location,
+            city: job.job_city || null,
+            state: job.job_state || null,
+            country: job.job_country || null,
+
+            coordinates: {
+              lat: job.job_latitude || null,
+              lng: job.job_longitude || null,
+            },
+
+            jobType,
+            workMode: job.job_is_remote ? "Remote" : "Onsite",
+
+            description: job.job_description,
+
+            salary: {
+              min: job.job_min_salary || null,
+              max: job.job_max_salary || null,
+              period: job.job_salary_period || null,
+            },
+
+            benefits: Array.isArray(job.job_benefits)
+              ? job.job_benefits
+              : [],
+
+            applyLink: job.job_apply_link,
+            applyType: job.job_apply_is_direct
+              ? "external"
+              : "internal",
+
+            postedAt: job.job_posted_at_datetime_utc
+              ? new Date(job.job_posted_at_datetime_utc)
+              : null,
+
+            status: "Open",
+            isActive: true,
+          },
+          $setOnInsert: {
+            externalJobId: job.job_id,
+            source: "jsearch",
           },
         },
         { upsert: true }
       );
     }
 
-    // 4️⃣ Update query index for next run
-    state.lastQueryIndex = (queryIndex + 1) % JOB_QUERIES.length;
+    state.lastQueryIndex =
+      (state.lastQueryIndex + 1) % JOB_QUERIES.length;
     await state.save();
 
-    console.log("✅ Job sync completed");
+    console.log("✅ Job sync completed successfully");
   } catch (error) {
     console.error("❌ Job sync failed:", error.message);
   }
 };
+
 
 //auto delete
 export const removeExpiredJobs = async () => {

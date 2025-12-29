@@ -5,54 +5,89 @@ const jobSchema = new mongoose.Schema(
     /* ===============================
        🔑 IDENTITY
     =============================== */
-
     externalJobId: {
-      type: String,
+      type: String, // job_id
+      required: true,
       unique: true,
-      sparse: true, // allows internal jobs later
       index: true,
     },
 
     source: {
-      type: String, // LinkedIn, Indeed, Foundit, SimplyHired, etc.
+      type: String, // jsearch
       required: true,
       index: true,
     },
 
-    /* ===============================
-       🏷 CORE JOB INFO
-    =============================== */
+    publisher: {
+      type: String, // job_publisher
+      default: null,
+      index: true,
+    },
 
+    /* ===============================
+       🏷 CORE INFO
+    =============================== */
     title: {
-      type: String,
+      type: String, // job_title
       required: true,
       trim: true,
       index: true,
     },
 
     companyName: {
-      type: String,
+      type: String, // employer_name
       required: true,
       trim: true,
       index: true,
     },
 
     companyLogo: {
-      type: String, // URL
+      type: String, // employer_logo
       default: null,
     },
 
     companyWebsite: {
-      type: String,
+      type: String, // employer_website
       default: null,
     },
 
     /* ===============================
-       📍 LOCATION & MODE
+       📍 LOCATION
     =============================== */
-
     location: {
-      type: String, // "Mumbai, Maharashtra, India"
+      type: String, // job_location
+      index: true,
+    },
+
+    city: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    state: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    country: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    coordinates: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+    },
+
+    /* ===============================
+       💼 JOB TYPE & MODE
+    =============================== */
+    jobType: {
+      type: String,
+      enum: ["Full-Time", "Part-Time", "Internship", "Contract"],
       index: true,
     },
 
@@ -63,40 +98,32 @@ const jobSchema = new mongoose.Schema(
     },
 
     /* ===============================
-       💼 JOB TYPE
-    =============================== */
-
-    jobType: {
-      type: String,
-      enum: ["Full-Time", "Part-Time", "Internship", "Contract"],
-      index: true,
-    },
-
-    /* ===============================
        📝 DESCRIPTION
     =============================== */
-
     description: {
       type: String,
     },
 
     /* ===============================
-       🧠 SKILLS (OPTIONAL / AI LATER)
+       💰 SALARY (OPTIONAL)
     =============================== */
+    salary: {
+      min: { type: Number, default: null },
+      max: { type: Number, default: null },
+      period: { type: String, default: null }, // MONTH / YEAR
+    },
 
-    skills: [
-      {
-        type: String,
-        lowercase: true,
-        trim: true,
-        index: true,
-      },
-    ],
+    /* ===============================
+       🎁 BENEFITS
+    =============================== */
+    benefits: {
+      type: [String],
+      default: [],
+    },
 
     /* ===============================
        🔗 APPLY INFO
     =============================== */
-
     applyLink: {
       type: String,
       required: true,
@@ -111,10 +138,10 @@ const jobSchema = new mongoose.Schema(
     /* ===============================
        ⏱ DATES & STATUS
     =============================== */
-
     postedAt: {
       type: Date,
-      default: null, // many RapidAPI jobs don't have this
+      default: null,
+      index: true,
     },
 
     status: {
@@ -130,19 +157,17 @@ const jobSchema = new mongoose.Schema(
       index: true,
     },
   },
-  {
-    timestamps: true, // createdAt, updatedAt
-  } 
+  { timestamps: true }
 );
 
 /* ===============================
-   🔍 TEXT SEARCH
+   🔍 SEARCH INDEX
 =============================== */
 jobSchema.index({
   title: "text",
   companyName: "text",
   location: "text",
-  skills: "text",
+  description: "text",
 });
 
 export default mongoose.model("Job", jobSchema);
