@@ -6,7 +6,7 @@ import cors from "cors";
 import dotenv from 'dotenv';
 import { createServer } from "http";
 import { startJobCron } from "./controller/jobs/jobCron.js";
-
+import { trackVisitor } from "./middleware/trackVisitor.js";
 import { Server } from "socket.io";
 import User from "./models/User.js";
 
@@ -43,6 +43,7 @@ mongoose.connect(connectionUrl, { useNewUrlParser: true, useUnifiedTopology: tru
 
     .catch((err) => console.error("Database connection error:", err.message));
 
+app.use(trackVisitor);
 
 app.use('/api', router);
 
