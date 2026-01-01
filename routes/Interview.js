@@ -14,12 +14,18 @@ getScheduledInterviews,
   getInterviewHistory,
   updateInterviewFeedback,
   getMentorRequests,
-  handleInterviewRequest 
+  handleInterviewRequest,
+  handleInterviewByEmail
 } from '../controller/interviews/Interview.js';
 
 import authenticateToken from '../middleware/index.js';
 
 const Router = express.Router();
+
+
+
+Router.get("/interview/:token", handleInterviewByEmail);
+Router.get("/interview/:token", handleInterviewByEmail);
 
 // All routes require authentication
 // Router.use(authenticateToken);
