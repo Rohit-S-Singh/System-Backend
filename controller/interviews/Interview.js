@@ -11,7 +11,11 @@ import { google } from 'googleapis';
 import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import { processInterviewRequest } from "../../services/interviewRequest.service.js";
+import { buildDateTime } from "../../utils/dateTime.js";
+
 import { log } from "console";
+import { createGoogleMeetLink } from "../../utils/googleMeet.js";
+
 dotenv.config();
 
 const { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
@@ -27,16 +31,56 @@ export const handleInterviewByEmail = async (req, res) => {
     }
 
     // Process interview (accept/reject + DB)
-    const request = await processInterviewRequest({ token, action });
+const result = await processInterviewRequest({ token, action });
+
+    let meetLink = null;
+
+if (action === "accept") {
+
+  const scheduledInterview = await InterviewScheduled.findById(result._id)
+    .populate("user", "name email")
+    .populate("mentor", "name email");
+
+  if (!scheduledInterview) {
+    return res.status(500).send("Scheduled interview not found");
+  }
+
+
+  // 2️⃣ build start & end time
+  const startISO = buildDateTime(
+    scheduledInterview.date,
+    scheduledInterview.time
+  );
+
+  const endISO = new Date(
+    new Date(startISO).getTime() + 60 * 60000
+  ).toISOString();
+
+  // 3️⃣ create google meet
+  meetLink = await createGoogleMeetLink({
+    title: "Mock Interview Session",
+    description: "Interview scheduled on Interview Platform",
+    startTime: startISO,
+    endTime: endISO,
+    attendees: [
+      scheduledInterview.user.email,
+      scheduledInterview.mentor.email
+    ],
+  });
+
+  // 4️⃣ save meet link
+  scheduledInterview.meetLink = meetLink;
+  await scheduledInterview.save();
+}
+
+
 
     console.log(request);
     
     // Fetch mentor and user details for email
-    const mentorData = await Mentor.findById(request.mentorid);
-    console.log(request.mentorid);
-    
-    console.log("Mentor Data:", mentorData);
-    const userData = await User.findById(request.userid);
+const mentorData = await Mentor.findById(scheduledInterview.mentor);
+const userData = await User.findById(scheduledInterview.user);
+
     console.log(request.userid);
     console.log("User Data:", userData);
 
@@ -154,6 +198,7 @@ export const handleInterviewRequest = async (req, res) => {
 
 
 export const createInterviewRequest = async (req, res) => {
+ console.log("Creating interview request...");
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -169,6 +214,7 @@ export const createInterviewRequest = async (req, res) => {
       additionalDetails,
     } = req.body;
 
+    log("Request body:", req.body);
     // 1️⃣ Validate input
     if (!mentor || !user || !date || !day || !time || !duration || !message) {
       return res.status(400).json({
@@ -277,15 +323,19 @@ const rejectLink = `http://192.168.1.2:8080/api/interviews/interview/${token}?ac
       request,
     });
 
-  } catch (error) {
-    await session.abortTransaction();
-    console.error("Create Interview Request Error:", error);
+} catch (error) {
+  console.error("🔥 FULL ERROR:", error);
+  console.error("🔥 MESSAGE:", error.message);
+  console.error("🔥 STACK:", error.stack);
 
-    return res.status(500).json({
-      success: false,
-      message: "Interview request failed. No changes were saved.",
-    });
-  } finally {
+  await session.abortTransaction();
+
+  return res.status(500).json({
+    success: false,
+    message: error.message || "Interview request failed. No changes were saved.",
+  });
+}
+ finally {
     session.endSession();
   }
 };

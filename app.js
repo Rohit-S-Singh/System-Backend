@@ -14,6 +14,8 @@ import '@shopify/shopify-api/adapters/node';
 
 import {shopifyApi, LATEST_API_VERSION} from '@shopify/shopify-api';
 import { Session } from "inspector";
+import { startInterviewReminderCron } from "./cron/interviewReminderCron.js";
+
 
 dotenv.config();
 const app = express();
@@ -24,9 +26,9 @@ const connectionUrl = "mongodb://rohitssingh17:Seeyouagain11!@ac-lo7eev6-shard-0
 
 app.use(cors());
 // app.use(cors({
-//   origin: "http://localhost:3000",
-//   methods: ["GET", "POST", "PUT", "DELETE"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
+    //   origin: "http://localhost:3000",
+    //   methods: ["GET", "POST", "PUT", "DELETE"],
+    //   allowedHeaders: ["Content-Type", "Authorization"],
 //   credentials: true
 // }));
 
@@ -36,8 +38,9 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(bodyParser.json({ limit: '50mb' }));
 
 mongoose.connect(connectionUrl, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => {console.log("Database connected successfully")
-
+.then(() => {console.log("Database connected successfully")
+    
+    startInterviewReminderCron();
          //  startJobCron()
              })
 

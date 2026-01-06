@@ -35,6 +35,9 @@ const InterviewScheduledSchema = new mongoose.Schema(
     additionalDetails: {
       type: String,
     },
+    reminder10MinSent: { type: Boolean, default: false },
+reminder2MinSent: { type: Boolean, default: false },
+meetLink: { type: String },
     status: {
       type: String,
       enum: ["scheduled", "completed", "cancelled"],
