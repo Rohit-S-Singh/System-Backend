@@ -89,6 +89,17 @@ const UserSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
+    isPremium: {
+  type: Boolean,
+  default: false,
+},
+
+subscription: {
+  plan: { type: String }, // basic, pro, mentor, recruiter
+  status: { type: String, enum: ["active", "expired", "cancelled"] },
+  startedAt: { type: Date },
+  expiresAt: { type: Date },
+},
   },
   { timestamps: true }
 );

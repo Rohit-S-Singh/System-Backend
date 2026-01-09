@@ -63,7 +63,7 @@ import AdminRoutes from "./AdminRoutes.js";
 import {getUserById , getMentorById} from "../controller/auth.js";
 import profileRoutes from "./profile.routes.js";
 import {setupProfile ,updateUserProfile } from "../controller/Profile/profile.controller.js";
-
+import paymentRoutes from "./paymentRoutes.js";
 
 // ---------- Setup ----------
 const Router = express.Router();
@@ -148,6 +148,7 @@ Router.use("/interviews", interviewRoutes);
 Router.use("/coins", coinRoutes);
 Router.use("/mentors", Mentor);
 Router.use("/Admin", AdminRoutes);
+Router.use("/payment", paymentRoutes);
 
 // =======================================================
 // ❌ FALLBACK
