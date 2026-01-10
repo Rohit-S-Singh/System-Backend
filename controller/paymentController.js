@@ -32,6 +32,14 @@ export const createOrder = async (req, res) => {
 
     const order = await paypalClient.execute(request);
 
+ console.log("checkon");
+
+ console.log(order);
+ console.log("checkon");
+ 
+ console.log(userId);
+ 
+
     // ✅ Save CREATED payment
     await Payment.create({
       userId: userId,
@@ -58,6 +66,9 @@ export const captureOrder = async (req, res) => {
   try {
     const { orderID } = req.params;
     const { userId } = req.body;
+
+
+
 
     const request = new paypal.orders.OrdersCaptureRequest(orderID);
     request.requestBody({});
