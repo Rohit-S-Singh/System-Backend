@@ -10,14 +10,13 @@ const calendar = google.calendar({ version: "v3", auth });
 
 export const createGoogleMeetLink = async ({ title, description, startTime, endTime, attendees }) => {
   const event = await calendar.events.insert({
-    calendarId: "primary",
+    calendarId: "tejassangvi7@gmail.com",
     conferenceDataVersion: 1,
     requestBody: {
       summary: title,
       description,
       start: { dateTime: startTime, timeZone: "Asia/Kolkata" },
       end: { dateTime: endTime, timeZone: "Asia/Kolkata" },
-      attendees: attendees.map(email => ({ email })),
       conferenceData: {
         createRequest: {
           requestId: Date.now().toString(),

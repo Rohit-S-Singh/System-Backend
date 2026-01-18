@@ -12,45 +12,68 @@ import User from "./models/User.js";
 
 import '@shopify/shopify-api/adapters/node';
 
-import {shopifyApi, LATEST_API_VERSION} from '@shopify/shopify-api';
+import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import { Session } from "inspector";
 import { startInterviewReminderCron } from "./cron/interviewReminderCron.js";
-
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 const app = express();
 const port = 8080;
+
 const connectionUrl = "mongodb://rohitssingh17:Seeyouagain11!@ac-lo7eev6-shard-00-00.xo7hitn.mongodb.net:27017,ac-lo7eev6-shard-00-01.xo7hitn.mongodb.net:27017,ac-lo7eev6-shard-00-02.xo7hitn.mongodb.net:27017/?ssl=true&replicaSet=atlas-4oinm6-shard-0&authSource=admin&retryWrites=true&w=majority";
 
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(cors());
-// app.use(cors({
-    //   origin: "http://localhost:3000",
-    //   methods: ["GET", "POST", "PUT", "DELETE"],
-    //   allowedHeaders: ["Content-Type", "Authorization"],
-//   credentials: true
-// }));
 
 const httpServer = createServer(app);
 
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(bodyParser.json({ limit: '50mb' }));
 
+// ✅ CONNECT DB + AUTO REMOVE WRONG UNIQUE INDEX
 mongoose.connect(connectionUrl, { useNewUrlParser: true, useUnifiedTopology: true })
-.then(() => {console.log("Database connected successfully")
-    
-    startInterviewReminderCron();
-         //  startJobCron()
-             })
+.then(async () => {
+  console.log("Database connected successfully");
 
-    .catch((err) => console.error("Database connection error:", err.message));
+  // 🔥 AUTO REMOVE WRONG UNIQUE INDEX (RUNS ONCE)
+  try {
+    const indexes = await mongoose.connection.db
+      .collection("resumes")
+      .indexes();
+
+    const hasUniqueUserId = indexes.find(
+      (i) => i.name === "userId_1" && i.unique
+    );
+
+    if (hasUniqueUserId) {
+      await mongoose.connection.db
+        .collection("resumes")
+        .dropIndex("userId_1");
+
+      console.log("✅ Removed UNIQUE index userId_1 from resumes collection");
+    } else {
+      console.log("ℹ️ No unique userId index found (already clean)");
+    }
+
+  } catch (err) {
+    console.error("❌ Resume index cleanup error:", err.message);
+  }
+
+  startInterviewReminderCron();
+  // startJobCron();
+
+})
+.catch((err) => console.error("Database connection error:", err.message));
 
 app.use(trackVisitor);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use('/api', router);
 
-
-httpServer.listen(port,'0.0.0.0', () => {
-    console.log(`Access locally at http://localhost:${port}`);
+httpServer.listen(port, '0.0.0.0', () => {
+  console.log(`Access locally at http://localhost:${port}`);
 });

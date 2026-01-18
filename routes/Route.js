@@ -30,13 +30,7 @@ import {
   deleteGroup
 } from "../controller/chat.js";
 
-import {
-  getMyResume,
-  getAllResumes,
-  setActiveResume,
-  getActiveResume,
-  uploadResume
-} from "../controller/resumeController.js";
+
 
 import {
   searchJobs,
@@ -64,6 +58,7 @@ import {getUserById , getMentorById} from "../controller/auth.js";
 import profileRoutes from "./profile.routes.js";
 import {setupProfile ,updateUserProfile } from "../controller/Profile/profile.controller.js";
 import paymentRoutes from "./paymentRoutes.js";
+import resumeRoutes from "./resume.js";
 
 // ---------- Setup ----------
 const Router = express.Router();
@@ -97,15 +92,7 @@ Router.get("/get-user-by-email", getUserByEmail);
 Router.put("/update", updateUserProfile);
 Router.get("/users/:userId", getUserById);
 // ---------- Resume ----------
-Router.get("/resume/my", getMyResume);
-Router.get("/resume/all", getAllResumes);
-Router.post("/resume/set-active", setActiveResume);
-Router.get("/resume/active", getActiveResume);
-Router.post(
-  "/resume/upload",
-  uploadResumeMiddleware.single("resume"),
-  uploadResume
-);
+
 
 // ---------- Chat ----------
 Router.get("/users", getAllUsers);
@@ -149,6 +136,7 @@ Router.use("/coins", coinRoutes);
 Router.use("/mentors", Mentor);
 Router.use("/Admin", AdminRoutes);
 Router.use("/payment", paymentRoutes);
+Router.use("/resumes", resumeRoutes);
 
 // =======================================================
 // ❌ FALLBACK
