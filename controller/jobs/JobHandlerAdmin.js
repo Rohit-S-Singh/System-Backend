@@ -1,5 +1,8 @@
+import { getRecommendedJobs } from "../../services/matchingService.js";
 // controllers/jobController.js
 import SavedJob from "../../models/SavedJob.js";
+import JobEmbedding from "../../models/JobEmbedding.js";
+import { processJobWithAI } from "../../services/aiService.js";
 
 import Job from "../../models/Job.js";
 
@@ -21,72 +24,30 @@ export const JOB_QUERIES = [
   "internship india",
 ];
 
-//auto fetch
-// export const syncJobsFromAPI = async () => {
-//   try {
-//     console.log("🔄 Job sync started");
 
-//     // 1️⃣ Get last used query index
-//     let state = await JobSyncState.findOne();
-//     if (!state) state = await JobSyncState.create({});
 
-//     const queryIndex = state.lastQueryIndex;
-//     const query = JOB_QUERIES[queryIndex];
+export const getRecommendedJobsForUser = async (req, res) => {
+  try {
+    const userId = req.user._id; // from auth
+    const limit = Number(req.query.limit) || 20;
 
-//     console.log(`📌 Fetching jobs for: ${query}`);
+    const results = await getRecommendedJobs(userId, limit);
 
-//     // 2️⃣ Call external job API
-//     const response = await axios.get(   
-//       "https://jsearch.p.rapidapi.com/search",
-//       {
-//         params: {
-//           query,
-//           page: "1",
-//         },
-//         headers: {
-//           "X-RapidAPI-Key": '6548a50121mshedff1732deff2dap1e7044jsn2b6e8fa6d0ea',
-//           "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
-//         },
-//       }
-//     );
+    return res.status(200).json({
+      success: true,
+      count: results.length,
+      jobs: results
+    });
 
-//     const jobs = response.data.data || [];
-//      console.log(jobs);
-        
-//     // 3️⃣ Store jobs in DB
-//     for (const job of jobs) {
-//       if (!job.job_id || !job.job_apply_link) continue;
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
-//       const deadline = job.job_offer_expiration_datetime
-//         ? new Date(job.job_offer_expiration_datetime)
-//         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-//       await Job.updateOne(
-//         { externalJobId: job.job_id },
-//         {
-//           $setOnInsert: {
-//             title: job.job_title,
-//             companyName: job.employer_name,
-//             location: job.job_city || job.job_country,
-//             jobType: job.job_employment_type,
-//             source: "JSearch",
-//             applyUrl: job.job_apply_link,
-//             deadline,
-//           },
-//         },
-//         { upsert: true }
-//       );
-//     }
-
-//     // 4️⃣ Update query index for next run
-//     state.lastQueryIndex = (queryIndex + 1) % JOB_QUERIES.length;
-//     await state.save();
-
-//     console.log("✅ Job sync completed");
-//   } catch (error) {
-//     console.error("❌ Job sync failed:", error.message);
-//   }
-// };
 
 export const syncJobsFromAPI = async () => {
   try {
@@ -124,60 +85,93 @@ export const syncJobsFromAPI = async () => {
           ? "Internship"
           : "Contract";
 
-      await Job.updateOne(
-        { externalJobId: job.job_id },
-        {
-          $set: {
-            title: job.job_title,
-            companyName: job.employer_name,
-            companyLogo: job.employer_logo || null,
-            companyWebsite: job.employer_website || null,
-            publisher: job.job_publisher || null,
+  const upsertedJob = await Job.findOneAndUpdate(
+  { externalJobId: job.job_id },
+  {
+    $set: {
+      title: job.job_title,
+      companyName: job.employer_name,
+      companyLogo: job.employer_logo || null,
+      companyWebsite: job.employer_website || null,
+      publisher: job.job_publisher || null,
 
-            location: job.job_location,
-            city: job.job_city || null,
-            state: job.job_state || null,
-            country: job.job_country || null,
+      location: job.job_location,
+      city: job.job_city || null,
+      state: job.job_state || null,
+      country: job.job_country || null,
 
-            coordinates: {
-              lat: job.job_latitude || null,
-              lng: job.job_longitude || null,
-            },
+      coordinates: {
+        lat: job.job_latitude || null,
+        lng: job.job_longitude || null,
+      },
 
-            jobType,
-            workMode: job.job_is_remote ? "Remote" : "Onsite",
+      jobType,
+      workMode: job.job_is_remote ? "Remote" : "Onsite",
 
-            description: job.job_description,
+      description: job.job_description,
 
-            salary: {
-              min: job.job_min_salary || null,
-              max: job.job_max_salary || null,
-              period: job.job_salary_period || null,
-            },
+      salary: {
+        min: job.job_min_salary || null,
+        max: job.job_max_salary || null,
+        period: job.job_salary_period || null,
+      },
 
-            benefits: Array.isArray(job.job_benefits)
-              ? job.job_benefits
-              : [],
+      benefits: Array.isArray(job.job_benefits)
+        ? job.job_benefits
+        : [],
 
-            applyLink: job.job_apply_link,
-            applyType: job.job_apply_is_direct
-              ? "external"
-              : "internal",
+      applyLink: job.job_apply_link,
+      applyType: job.job_apply_is_direct
+        ? "external"
+        : "internal",
 
-            postedAt: job.job_posted_at_datetime_utc
-              ? new Date(job.job_posted_at_datetime_utc)
-              : null,
+      postedAt: job.job_posted_at_datetime_utc
+        ? new Date(job.job_posted_at_datetime_utc)
+        : null,
 
-            status: "Open",
-            isActive: true,
-          },
-          $setOnInsert: {
-            externalJobId: job.job_id,
-            source: "jsearch",
-          },
-        },
-        { upsert: true }
-      );
+      status: "Open",
+      isActive: true,
+    },
+    $setOnInsert: {
+      externalJobId: job.job_id,
+      source: "jsearch",
+    },
+  },
+  { upsert: true, new: true }
+);
+
+
+// 🔥 CREATE EMBEDDING ONLY IF NOT ALREADY PRESENT
+const exists = await JobEmbedding.findOne({ jobId: upsertedJob._id });
+
+if (!exists && upsertedJob.description) {
+  try {
+    const aiResult = await processJobWithAI({
+      jobId: upsertedJob._id.toString(),
+      title: upsertedJob.title,
+      company: upsertedJob.companyName,
+      description: upsertedJob.description,
+    });
+
+    await JobEmbedding.create({
+      jobId: upsertedJob._id,
+      title: upsertedJob.title,
+      company: upsertedJob.companyName,
+      embedding: aiResult.embedding,
+      jobText: upsertedJob.description,
+    });
+
+    console.log("🧠 Job embedding created (API job)");
+
+  } catch (err) {
+    console.error("❌ API job embedding failed:", err.message);
+  }
+}
+
+
+
+
+
     }
 
     state.lastQueryIndex =
@@ -604,6 +598,29 @@ export const createJob = async (req, res) => {
        💾 SAVE JOB
     =============================== */
     const savedJob = await job.save();
+
+    // 🔥 SEND ADMIN/RECRUITER JOB TO AI
+try {
+  const aiResult = await processJobWithAI({
+    jobId: savedJob._id.toString(),
+    title: savedJob.title,
+    company: savedJob.companyName,
+    description: savedJob.description || "",
+  });
+
+  await JobEmbedding.create({
+    jobId: savedJob._id,
+    title: savedJob.title,
+    company: savedJob.companyName,
+    embedding: aiResult.embedding,
+    jobText: savedJob.description,
+  });
+
+  console.log("🧠 Job embedding created (manual job)");
+
+} catch (err) {
+  console.error("❌ Job AI failed:", err.message);
+}
 
     return res.status(201).json({
       success: true,

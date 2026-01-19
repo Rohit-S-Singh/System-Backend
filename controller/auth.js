@@ -60,9 +60,10 @@ export const oauthCallback = async (req, res) => {
       user = new User({ email });
     }
 
-    user.accessToken = tokens.access_token;
-    user.refreshToken = tokens.refresh_token;
-    user.tokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
+user.gmailAccessToken = tokens.access_token;
+user.gmailRefreshToken = tokens.refresh_token;
+user.gmailTokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
+
 
     // Optional: Store profile info
     user.name = name;
@@ -73,7 +74,7 @@ export const oauthCallback = async (req, res) => {
 
     await user.save();
 
-    return res.send("✅ Gmail connected successfully!");
+return res.redirect(`${process.env.FRONTEND_URL}/email-sender?gmail=connected`);
   } catch (err) {
     console.error("Callback error:", err.response?.data || err.message);
     return res.status(500).json({ message: "OAuth callback failed" });
@@ -91,14 +92,15 @@ export const sendEmail = async (req, res) => {
 
   try {
     const user = await User.findOne({ email: from });
-    if (!user || !user.refreshToken) {
+    if (!user || !user.gmailRefreshToken) {
       return res.status(401).json({ success: false, message: "Email not connected" });
     }
 
     const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
     oAuth2Client.setCredentials({
-      access_token: user.accessToken,
-      refresh_token: user.refreshToken,
+access_token: user.gmailAccessToken,
+refresh_token: user.gmailRefreshToken,
+
     });
 
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
@@ -214,7 +216,7 @@ export const CheckEmailConnection = async (req, res) => {
 
   try {
     const user = await User.findOne({ email }).lean();
-    if (user?.accessToken) {
+    if (user?.gmailRefreshToken) {
       return res.json({ success: true, connected: true, user });
     }
     return res.json({ success: false, message: "Email not connected" });
@@ -451,7 +453,6 @@ export const LoginUser = async (req, res) => {
 
     // 🟢 Update login state
     user.online = true;
-    user.accessToken = token;
     user.tokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     // ❌ AUTO-GENERATED RESUME LOGIC REMOVED

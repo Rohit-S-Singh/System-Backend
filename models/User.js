@@ -83,6 +83,9 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    gmailAccessToken: String,
+    gmailRefreshToken: String,
+    gmailTokenExpiry: Date,
 
     // 🔗 Referral
     referredBy: {

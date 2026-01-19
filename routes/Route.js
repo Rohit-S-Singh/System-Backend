@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import { oauthCallback } from "../controller/auth.js";
 
 // ---------- Controllers ----------
 import {
@@ -77,7 +78,7 @@ Router.post("/register", RegisterUser);
 Router.post("/verifytoken", verifyToken);
 
 Router.get("/authUrl", getAuthUrl);
-Router.post("/oauth2/callback", GoogleAuthHandler);
+Router.get("/oauth2/callback", oauthCallback);
 Router.post("/set-password", setPasswordForOAuthUser);
 
 // =======================================================
@@ -107,7 +108,7 @@ Router.delete("/groups", deleteGroup);
 Router.delete("/groups/message", deleteMessageFromMe);
 
 // ---------- Email ----------
-Router.post("/email/check-connection", CheckEmailConnection);
+Router.post("/check-email-connection", CheckEmailConnection);
 Router.post("/email/send", upload.single("attachment"), sendEmail);
 Router.get("/email/logs", getEmailLogs);
 Router.get("/email/journey", getEmailThreadLogs);

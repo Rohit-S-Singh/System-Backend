@@ -1,3 +1,4 @@
+import { getRecommendedJobs } from "../services/matchingService.js";
 import Resume from "../models/Resume.js";
 import fs from "fs";
 import path from "path";
@@ -8,6 +9,33 @@ import ResumeEmbedding from "../models/ResumeEmbedding.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
+
+
+
+
+export const getRecommendedJobsForUser = async (req, res) => {
+  try {
+    const userId = req.user._id; // from auth
+    const limit = Number(req.query.limit) || 20;
+
+    const results = await getRecommendedJobs(userId, limit);
+
+    return res.status(200).json({
+      success: true,
+      count: results.length,
+      jobs: results
+    });
+
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 
 /**
  * Upload a new resume

@@ -1,10 +1,12 @@
 import { Router } from 'express';
 
-import { getRandomJobs,getJobsBySkillMatch ,filterJobs ,getJobDetails, createJob ,deleteJobById,getSavedJobs,removeSavedJob ,saveJob} from '../controller/jobs/JobHandlerAdmin.js';
+import { getRandomJobs,getJobsBySkillMatch ,filterJobs ,getJobDetails, createJob ,deleteJobById,getSavedJobs,removeSavedJob ,saveJob,getRecommendedJobsForUser} from '../controller/jobs/JobHandlerAdmin.js';
 const JobRouter = Router();
 
 // Job CRUD routes
 JobRouter.get('/random', getRandomJobs);
+JobRouter.get("/recommended",  getRecommendedJobsForUser);
+
 JobRouter.post('/by-skill-match', getJobsBySkillMatch);
 JobRouter.get('/filter', filterJobs);
 JobRouter.get("/jobs/:jobId", getJobDetails);
