@@ -16,7 +16,8 @@ import {
   fetchTemplateByEmail,
   saveTemplateByEmail,
   getEmailThreadLogs,
-  getUserByEmail
+  getUserByEmail,
+  saveFollowUpTemplates,fetchFollowUpTemplates
 } from "../controller/auth.js";
 
 import {
@@ -72,6 +73,7 @@ const upload = multer();
 Router.get("/health-check", (req, res) => {
   res.json({ status: 200, message: "Server is working" });
 });
+Router.get("/fetch/template", fetchTemplateByEmail);
 
 Router.post("/login", LoginUser);
 Router.post("/register", RegisterUser);
@@ -107,6 +109,13 @@ Router.post("/groups/message", sendGroupMessage);
 Router.delete("/groups", deleteGroup);
 Router.delete("/groups/message", deleteMessageFromMe);
 
+
+
+// Add these routes in the Email section
+
+// Add follow-up template routes
+Router.post("/save-followup-template", saveFollowUpTemplates);
+Router.get("/fetch-followup-templates/:email", fetchFollowUpTemplates);
 // ---------- Email ----------
 Router.post("/check-email-connection", CheckEmailConnection);
 Router.post("/email/send", upload.single("attachment"), sendEmail);
@@ -114,7 +123,7 @@ Router.get("/email/logs", getEmailLogs);
 Router.get("/email/journey", getEmailThreadLogs);
 Router.get("/email/logs/all", getAllLogsByUser);
 
-Router.post("/email/template", saveTemplateByEmail);
+Router.post("/save-html-template", saveTemplateByEmail);
 Router.get("/email/template", fetchTemplateByEmail);
 
 // ---------- Search ----------

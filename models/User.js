@@ -96,6 +96,17 @@ const UserSchema = new mongoose.Schema(
   type: Boolean,
   default: false,
 },
+// 📧 Email Templates
+htmlEmailTemplate: {
+  finalHtml: { type: String },
+},
+
+followUpTemplates: [
+  {
+    name: String,
+    message: String,
+  },
+],
 
 subscription: {
   plan: { type: String }, // basic, pro, mentor, recruiter

@@ -45,6 +45,54 @@ export const requestRecruiter = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+export const addRecruiter = async (req, res) => {
+  console.log("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+  
+  try {
+    const { name, email, userEmail } = req.body;
+
+    console.log("ADD RECRUITER BODY:", req.body);
+
+    if (!name || !email || !userEmail) {
+      return res.status(400).json({
+        success: false,
+        message: "name, email, userEmail are required"
+      });
+    }
+
+    // find logged-in user
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // create recruiter contact
+    const recruiter = await Recruiter.create({
+      name,
+      email,
+      addedBy: user._id,
+      status: "No Response",
+      sentAt: null
+    });
+
+    console.log("RECRUITER CREATED:", recruiter);
+
+    return res.status(201).json({
+      success: true,
+      recruiter
+    });
+
+  } catch (error) {
+    console.error("ADD RECRUITER ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to add recruiter"
+    });
+  }
+};
 
 
 
@@ -54,6 +102,10 @@ export const requestRecruiter = async (req, res) => {
 
 
 export const getUserRecruiters = async (req, res) => {
+
+console.log("checking   111111111111111111111111111111111111111");
+
+
   const userEmail = req.query?.userEmail;
 
   if (!userEmail) {
@@ -67,6 +119,10 @@ export const getUserRecruiters = async (req, res) => {
     }
 
     const recruiters = await Recruiter.find({ addedBy: user._id }).sort({ createdAt: -1 });
+     
+    console.log("recruiters checking :: ",recruiters);
+    
+
     res.json({ success: true, recruiters });
   } catch (err) {
     console.error("Error fetching recruiters:", err);
