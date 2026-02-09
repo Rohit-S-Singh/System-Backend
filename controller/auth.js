@@ -667,7 +667,7 @@ export const setPasswordForOAuthUser = async (req, res) => {
 export const getUserByEmail = async (req, res) => {
 
   
-  if(!req.user.email){
+  if(!req?.user?.email){
     req.user.email = 'rohitshekrsingh@gmail.com';
   }
 
