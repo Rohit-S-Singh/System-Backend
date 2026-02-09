@@ -93,7 +93,7 @@ Router.post("/set-password", setPasswordForOAuthUser);
 
 // ---------- User ----------
 Router.post("/first-time-details-fill", setupProfile);
-Router.get("/get-user-by-email", getUserByEmail);
+Router.get("/get-user-by-email", authenticateToken, getUserByEmail);
 Router.put("/update", updateUserProfile);
 Router.get("/users/:userId", getUserById);
 // ---------- Resume ----------
