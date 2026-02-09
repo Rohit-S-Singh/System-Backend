@@ -1,16 +1,13 @@
 import mammoth from "mammoth";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
 
 export const extractResumeText = async (file) => {
   // ================= PDF =================
   if (file.mimetype === "application/pdf") {
-    // 🔑 Dynamic import (ESM-safe)
-    const pdfParseModule = await import("pdf-parse");
-
-    // pdf-parse may expose function in different ways
-    const pdfParse =
-      pdfParseModule.default || pdfParseModule;
-
-    const data = await pdfParse(file.buffer);
+    const data = await pdfParse.PDFParse(file.buffer);
     return data.text;
   }
 
