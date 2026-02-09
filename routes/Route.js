@@ -95,14 +95,17 @@ Router.post("/set-password", setPasswordForOAuthUser);
 Router.post("/first-time-details-fill", setupProfile);
 Router.get("/get-user-by-email", authenticateToken, getUserByEmail);
 Router.put("/update", updateUserProfile);
+Router.get("/get-user-by-email", authenticateToken, getUserByEmail);
+Router.post("/enter-updateUserCategory", updateUserCategory);
 Router.get("/users/:userId", getUserById);
 // ---------- Resume ----------
-Router.get("/resume/my", getMyResume);
+Router.get("/resume/my", authenticateToken, getMyResume);
 Router.get("/resume/all", getAllResumes);
 Router.post("/resume/set-active", setActiveResume);
 Router.get("/resume/active", getActiveResume);
 Router.post(
   "/resume/upload",
+  authenticateToken,
   uploadResumeMiddleware.single("resume"),
   uploadResume
 );

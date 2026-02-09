@@ -10,24 +10,24 @@ export const uploadResume = async (req, res) => {
     }
 
     // 1️⃣ Store original file
-    const storedFile = await storeFile(req.file);
+    const storedFile = await storeFile(req.file, req.user.userId);
 
     // 2️⃣ Extract text
-    const rawText = await extractResumeText(req.file);
+    // const rawText = await extractResumeText(req.file);
 
     // 3️⃣ Parse resume
-    const parsedContent = parseResumeText(rawText);
+    // const parsedContent = parseResumeText(rawText);
 
     // 4️⃣ Save resume
     const resume = await Resume.create({
-      userId: req.user._id,
+      userId: req.user.userId,
       type: "uploaded",
       originalFile: {
         url: storedFile.url,
         fileType: storedFile.fileType,
         uploadedAt: new Date(),
       },
-      content: parsedContent,
+      content: null,
     });
 
     return res.status(200).json({
@@ -112,19 +112,26 @@ export const getActiveResume = async (req, res) => {
     });
   }
 };
-
 export const getMyResume = async (req, res) => {
-  
-  const resume = await Resume.findOne({ userId: req.user._id });
+  try {
+    const resumes = await Resume.find({ userId: req.user.userId }).lean();
 
-    console.log("hiiiiiiiiiiiiiiiiii");
+    if (!resumes || resumes.length === 0) {
+      return res.status(200).json({
+        success: true,
+        resumes: []
+      });
+    }
 
-  if (!resume) {
-    return res.status(404).json({ message: "Resume not found" });
+    return res.status(200).json({
+      success: true,
+      resumes
+    });
+  } catch (error) {
+    console.error("Get resume error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch resumes"
+    });
   }
-
-  res.status(200).json({
-    success: true,
-    resume
-  });
 };
