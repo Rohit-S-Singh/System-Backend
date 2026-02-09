@@ -116,9 +116,6 @@ export const getRandomJobs = async (req, res) => {
         },
       },
       {
-        $sample: { size: limit },
-      },
-      {
         $project: {
           _id: 1,
           title: 1,
