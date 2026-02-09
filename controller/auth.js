@@ -668,7 +668,7 @@ export const getUserByEmail = async (req, res) => {
 
   
   if(!req?.user?.email){
-    req.user.email = 'rohitshekrsingh@gmail.com';
+    req.user["email"] = 'rohitshekrsingh@gmail.com';
   }
 
 
