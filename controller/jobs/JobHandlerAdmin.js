@@ -116,6 +116,9 @@ export const getRandomJobs = async (req, res) => {
         },
       },
       {
+        $sort: { createdAt: -1 }, // 👈 latest first
+      },
+      {
         $project: {
           _id: 1,
           title: 1,
