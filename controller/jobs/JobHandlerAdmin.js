@@ -116,7 +116,10 @@ export const getRandomJobs = async (req, res) => {
         },
       },
       {
-        $sort: { createdAt: -1 }, // 👈 latest first
+        $sort: { createdAt: -1 }, // latest first
+      },
+      {
+        $limit: limit, // 👈 add limit here
       },
       {
         $project: {
