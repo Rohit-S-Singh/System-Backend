@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { getRandomJobs,getJobsBySkillMatch ,filterJobs ,getJobDetails, createJob ,deleteJobById,getSavedJobs,removeSavedJob ,saveJob} from '../controller/jobs/JobHandlerAdmin.js';
+import { ingestJobFromExtension, getRandomJobs,getJobsBySkillMatch ,filterJobs ,getJobDetails, createJob ,deleteJobById,getSavedJobs,removeSavedJob ,saveJob} from '../controller/jobs/JobHandlerAdmin.js';
 const JobRouter = Router();
 
 // Job CRUD routes
@@ -15,4 +15,7 @@ JobRouter.get("/saved/:userId",  getSavedJobs);
 JobRouter.post("/save",  saveJob);
 // Remove saved job
 JobRouter.delete("/remove", removeSavedJob);
+
+
+JobRouter.post("/ingest", ingestJobFromExtension);
 export default JobRouter;

@@ -218,9 +218,9 @@ export const getRandomJobs = async (req, res) => {
           status: "Open",
         },
       },
-      {
-        $sample: { size: limit },
-      },
+      // {
+        // $sample: { size: limit },
+      // },
       {
         $project: {
           _id: 1,
@@ -765,3 +765,114 @@ export const removeSavedJob = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/**
+ * @desc Add job from browser extension
+ * @route POST /api/jobs/ingest
+ * @access Public (or token-based later)
+ */
+export const ingestJobFromExtension = async (req, res) => {
+  try {
+    const {
+      externalJobId,
+      source = "linkedin",
+      publisher,
+      title,
+      companyName,
+      companyLogo,
+      companyWebsite,
+      location,
+      city,
+      state,
+      country,
+      coordinates,
+      jobType,
+      workMode,
+      description,
+      salary,
+      benefits,
+      applyLink,
+      postedAt,
+    } = req.body;
+
+    // 🔴 Required fields check (fail fast)
+    if (!externalJobId || !title || !companyName || !applyLink || title == 'Unknown Role' || companyName == 'Unknown Company') {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required job fields",
+      });
+    }
+
+    /**
+     * 🔐 UPSERT LOGIC
+     * - If job exists → do nothing
+     * - If not → insert
+     */
+    const job = await Job.findOneAndUpdate(
+      { externalJobId }, // 🔑 duplicate check
+      {
+        $setOnInsert: {
+          externalJobId,
+          source,
+          publisher,
+          title,
+          companyName,
+          companyLogo,
+          companyWebsite,
+          location,
+          city,
+          state,
+          country,
+          coordinates,
+          jobType,
+          workMode,
+          description,
+          salary,
+          benefits,
+          applyLink,
+          postedAt,
+          status: "Open",
+          isActive: true,
+        },
+      },
+      {
+        upsert: true,
+        new: false, // important: tells us if it already existed
+      }
+    );
+
+    // If job already existed
+    if (job) {
+      return res.status(200).json({
+        success: true,
+        message: "Job already exists",
+        isDuplicate: true,
+      });
+    }
+
+    console.log("JOB POstewd");
+
+    // New job inserted
+    return res.status(201).json({
+      success: true,
+      message: "Job added successfully",
+      isDuplicate: false,
+    });
+  } catch (error) {
+    // Duplicate key safety (edge case)
+    if (error.code === 11000) {
+      return res.status(200).json({
+        success: true,
+        message: "Job already exists",
+        isDuplicate: true,
+      });
+    }
+
+    console.error("Job ingestion error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+

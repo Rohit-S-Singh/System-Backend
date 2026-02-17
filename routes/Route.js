@@ -18,6 +18,10 @@ import {
   getUserByEmail
 } from "../controller/auth.js";
 
+
+
+import JobRouter from "./JobAdmin.js"
+
 import {
   getAllUsers,
   getChat,
