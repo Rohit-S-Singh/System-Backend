@@ -155,6 +155,8 @@ Router.use("/interviews", interviewRoutes);
 Router.use("/coins", coinRoutes);
 Router.use("/mentors", Mentor);
 Router.use("/Admin", AdminRoutes);
+import expenseRoutes from "./ExpenseRoutes.js";
+Router.use("/expenses", expenseRoutes);
 
 // =======================================================
 // ❌ FALLBACK
