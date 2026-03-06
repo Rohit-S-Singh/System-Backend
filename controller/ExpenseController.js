@@ -69,7 +69,7 @@ export const deleteExpense = async (req, res) => {
 export const getTodayExpenses = async (req, res) => {
   try {
 
-    const { email } = req.query;
+    const { email } = req.body;
 
     const start = new Date();
     start.setHours(0,0,0,0);
@@ -107,7 +107,7 @@ export const getTodayExpenses = async (req, res) => {
 export const getTodayTotal = async (req, res) => {
   try {
 
-    const { email } = req.query;
+    const { email } = req.body;
 
     const start = new Date();
     start.setHours(0,0,0,0);
