@@ -15,11 +15,11 @@ router.post("/add-expense", addExpense);
 
 
 // Get today's expenses (email via query param)
-router.get("/today-expenses", getTodayExpenses);
+router.post("/today-expenses", getTodayExpenses);
 
 
 // Get today's total spend (email via query param)
-router.get("/today-total", getTodayTotal);
+router.post("/today-total", getTodayTotal);
 
 
 // Delete expense
