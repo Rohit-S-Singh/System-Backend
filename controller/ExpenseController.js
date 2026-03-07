@@ -149,3 +149,118 @@ export const getTodayTotal = async (req, res) => {
 
   }
 };
+
+
+
+// import Expense from "../models/Expense.js";
+
+export const setBudget = async (req, res) => {
+
+  try {
+
+    const { email, monthlyBudget } = req.body;
+
+    const expense = await Expense.findOneAndUpdate(
+      { email },
+      { monthlyBudget },
+      { new: true, upsert: true }
+    );
+
+    res.json({
+      message: "Budget updated",
+      expense
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+
+};
+
+
+export const getBudgetPercentage = async (req, res) => {
+
+  try {
+
+    const { email } = req.query;
+
+    const now = new Date();
+
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const expenses = await Expense.aggregate([
+      {
+        $match: {
+          email,
+          date: { $gte: start, $lt: end }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalSpent: { $sum: "$amount" },
+          budget: { $max: "$monthlyBudget" }
+        }
+      }
+    ]);
+
+    const totalSpent = expenses[0]?.totalSpent || 0;
+    const monthlyBudget = expenses[0]?.budget || 0;
+
+    const percentage = monthlyBudget
+      ? (totalSpent / monthlyBudget) * 100
+      : 0;
+
+    res.json({
+      totalSpent,
+      monthlyBudget,
+      percentage: percentage.toFixed(2)
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+
+};
+
+export const getLastDayExpenses = async (req, res) => {
+
+  try {
+
+    const { email } = req.query;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const start = new Date(yesterday.setHours(0,0,0,0));
+    const end = new Date(yesterday.setHours(23,59,59,999));
+
+    const expenses = await Expense.find({
+      email,
+      date: { $gte: start, $lte: end }
+    }).sort({ date: -1 });
+
+    res.json(expenses);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+
+};
+
+export const getAllExpenses = async (req, res) => {
+
+  try {
+
+    const { email } = req.query;
+
+    const expenses = await Expense.find({ email }).sort({ date: -1 });
+
+    res.json(expenses);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+
+};

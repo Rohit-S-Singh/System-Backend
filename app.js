@@ -44,7 +44,64 @@ mongoose.connect(connectionUrl, { useNewUrlParser: true, useUnifiedTopology: tru
     .catch((err) => console.error("Database connection error:", err.message));
 
 app.use(trackVisitor);
-
+// app.post("/create-interview", async (req, res) => {
+//     try {
+//       const { interviewType } = req.body;
+  
+//       const response = await fetch(
+//         "https://api.vapi.ai/call/web/token",
+//         {
+//           method: "POST",
+//           headers: {
+//             Authorization: `Bearer ${process.env.VAPI_PRIVATE_KEY}`,
+//             "Content-Type": "application/json",
+//           },
+//           body: JSON.stringify({
+//             assistantId: process.env.VAPI_ASSISTANT_ID,
+//             metadata: {
+//               interviewType,
+//               candidateId: "local-test-user",
+//             },
+//           }),
+//         }
+//       );
+  
+//       const data = await response.json();
+  
+//       console.log("VAPI TOKEN RESPONSE:", data);
+  
+//       res.json({
+//         token: data.token, // ✅ THIS is what frontend needs
+//       });
+//     } catch (err) {
+//       console.error(err);
+//       res.status(500).json({ error: "Failed to create interview" });
+//     }
+//   });
+  
+  
+app.post("/create-interview", async (req, res) => {
+    try {
+      const { interviewType } = req.body;
+  
+      if (!interviewType) {
+        return res.status(400).json({ error: "interviewType required" });
+      }
+  
+      res.json({
+        assistantId: process.env.VAPI_ASSISTANT_ID,
+        metadata: {
+          interviewType,
+          candidateId: "local-test-user",
+          source: "realhired-web",
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to create interview" });
+    }
+  });
+  
 app.use('/api', router);
 
 

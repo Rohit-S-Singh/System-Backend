@@ -6,7 +6,11 @@ import {
   addExpense,
   getTodayExpenses,
   deleteExpense,
-  getTodayTotal
+  getTodayTotal,
+  setBudget,
+  getBudgetPercentage,
+  getLastDayExpenses,
+  getAllExpenses
 } from "../controller/ExpenseController.js";
 
 
@@ -24,6 +28,20 @@ router.post("/today-total", getTodayTotal);
 
 // Delete expense
 router.delete("/delete-expense/:id", deleteExpense);
+
+
+
+// set monthly budget
+router.post("/set-budget", setBudget);
+
+// get percentage spent
+router.get("/budget-percentage", getBudgetPercentage);
+
+// get yesterday expenses
+router.get("/expenses-last-day", getLastDayExpenses);
+
+// get all expenses
+router.get("/expenses", getAllExpenses);
 
 
 export default router;
