@@ -1,9 +1,10 @@
-import { Coin, CoinTransaction } from '../models/Coin.js';
-import User from '../models/User.js';
-import Subscription from '../models/Subscription.js';
-import { createNotification } from './Notification.js';
-import crypto from 'crypto';
+import { Coin, CoinTransaction } from '../../models/Coin.js';
+import User from '../../models/User.js';
+import Subscription from '../../models/Subscription.js';
+// import Interview from '../../models/interview/Interview.js';
 
+import { createNotification } from '../Notification.js';
+import crypto from 'crypto';
 // Generate unique referral code
 const generateReferralCode = () => {
   return crypto.randomBytes(4).toString('hex').toUpperCase();
@@ -336,54 +337,82 @@ export const processReferral = async (req, res) => {
 };
 
 // Award coins for interview completion
-export const awardInterviewCoins = async (interviewId, candidateId, mentorId) => {
-  try {
-    const interviewBonus = 25; // 25 coins for completing interview
+// export const awardInterviewCoins = async (interviewId, candidateId, mentorId) => {
+//   try {
+//     const interviewBonus = 25; // 25 coins for completing interview
     
-    // Award coins to candidate
-    await addCoins(
-      candidateId,
-      interviewBonus,
-      'interview_completed',
-      'Coins earned for completing interview',
-      interviewId,
-      { interviewType: 'completed' }
-    );
+//     // Award coins to candidate
+//     await addCoins(
+//       candidateId,
+//       interviewBonus,
+//       'interview_completed',
+//       'Coins earned for completing interview',
+//       interviewId,
+//       { interviewType: 'completed' }
+//     );
 
-    // Award coins to mentor
-    await addCoins(
-      mentorId,
-      interviewBonus,
-      'interview_completed',
-      'Coins earned for conducting interview',
-      interviewId,
-      { interviewType: 'conducted' }
-    );
+//     // Award coins to mentor
+//     await addCoins(
+//       mentorId,
+//       interviewBonus,
+//       'interview_completed',
+//       'Coins earned for conducting interview',
+//       interviewId,
+//       { interviewType: 'conducted' }
+//     );
 
-    // Create notifications
-    await createNotification({
-      recipient: candidateId,
-      type: 'interview_completed',
-      title: 'Interview Completed!',
-      message: `You earned ${interviewBonus} coins for completing the interview`,
-      data: { coins: interviewBonus, interviewId },
-      priority: 'medium'
-    });
+//     // Create notifications
+//     await createNotification({
+//       recipient: candidateId,
+//       type: 'interview_completed',
+//       title: 'Interview Completed!',
+//       message: `You earned ${interviewBonus} coins for completing the interview`,
+//       data: { coins: interviewBonus, interviewId },
+//       priority: 'medium'
+//     });
 
-    await createNotification({
-      recipient: mentorId,
-      type: 'interview_completed',
-      title: 'Interview Completed!',
-      message: `You earned ${interviewBonus} coins for conducting the interview`,
-      data: { coins: interviewBonus, interviewId },
-      priority: 'medium'
-    });
+//     await createNotification({
+//       recipient: mentorId,
+//       type: 'interview_completed',
+//       title: 'Interview Completed!',
+//       message: `You earned ${interviewBonus} coins for conducting the interview`,
+//       data: { coins: interviewBonus, interviewId },
+//       priority: 'medium'
+//     });
 
-  } catch (error) {
-    console.error('Error awarding interview coins:', error);
-    throw error;
-  }
+//   } catch (error) {
+//     console.error('Error awarding interview coins:', error);
+//     throw error;
+//   }
+// };
+export const awardInterviewCoins = async (interviewId) => {
+  const interview = await Interview.findById(interviewId);
+
+  const mentorReward = 20;
+  const candidateReward = 10;
+
+  await createTransaction(interview.mentor, mentorReward, "mentor");
+  await createTransaction(interview.candidate, candidateReward, "candidate");
 };
+
+const createTransaction = async (userId, amount, role) => {
+  let coin = await Coin.findOne({ user: userId });
+  if (!coin) coin = await Coin.create({ user: userId });
+
+  coin.balance += amount;
+  coin.totalEarned += amount;
+  await coin.save();
+
+  await CoinTransaction.create({
+    user: userId,
+    amount,
+    type: "interview_completed",
+    balance: coin.balance,
+    role,
+    description: "Interview completed"
+  });
+};
+
 
 // Purchase subscription with coins
 export const purchaseSubscriptionWithCoins = async (req, res) => {

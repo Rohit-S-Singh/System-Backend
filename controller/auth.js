@@ -3,10 +3,22 @@ import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import User from '../models/User.js';
+import Mentor from '../models/Mentor.js';
 import { registerSchemaValidation, LoginschemaValidation } from '../validations/index.js';
 import pkg from 'bcryptjs';
 import EmailLog from "../models/EmailLogs.js";
 import Recruiter from '../models/Recruiter.js';
+import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
+import Resume from "../models/Resume.js";
+import { generateIndustryResume } from "../services/resumeGenerator.js";
+
+/**
+ * @desc    Register new user
+ * @route   POST /api/register
+ * @access  Public
+ */
+
 const { hash, compare } = pkg;
 dotenv.config();
 
@@ -71,6 +83,7 @@ export const oauthCallback = async (req, res) => {
 
 import fs from "fs";
 import path from "path";
+import { log } from 'console';
 
 export const sendEmail = async (req, res) => {
   const { to, subject, body, from, threadId } = req.body;
@@ -83,6 +96,7 @@ export const sendEmail = async (req, res) => {
     }
 
     const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+    
     oAuth2Client.setCredentials({
       access_token: user.accessToken,
       refresh_token: user.refreshToken,
@@ -91,6 +105,7 @@ export const sendEmail = async (req, res) => {
     const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
     const boundary = "boundary_" + Date.now();
+    
     const messageParts = [
       `From: ${from}`,
       `To: ${to}`,
@@ -140,6 +155,7 @@ export const sendEmail = async (req, res) => {
     const response = await gmail.users.messages.send(gmailRequest);
 
     const recruiter = await Recruiter.findOne({ email: to }).lean();
+    
     if (!recruiter) {
       return res.status(404).json({ success: false, message: "Recruiter not found" });
     }
@@ -212,6 +228,8 @@ export const CheckEmailConnection = async (req, res) => {
 };
 
 export const GoogleAuthHandler = async (req, res) => {
+
+  
   const { token } = req.body;
   if (!token) return res.status(400).json({ success: false, message: "Token missing" });
 
@@ -219,16 +237,14 @@ export const GoogleAuthHandler = async (req, res) => {
 
   try {
     const ticket = await client.verifyIdToken({ idToken: token, audience: CLIENT_ID });
-    const payload = ticket.getPayload();
-
+    const payload = ticket.getPayload();    
     const { email, name, picture, locale, email_verified } = payload;
-
     let user = await User.findOne({ email });
     if (!user) {
       user = await User.create({
         email,
         name,
-        avatar: picture, // Add this field to your User schema
+        picture: picture, // Add this field to your User schema
         oauthProvider: "google",
         locale, // Optional
         emailVerified: email_verified // Optional
@@ -250,70 +266,231 @@ export const GoogleAuthHandler = async (req, res) => {
   }
 };
 
+// export const RegisterUser = async (req, res) => {
+//   try {
+//     const { userName, email, password } = req.body;
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+//      console.log(req.body);
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+//     console.log("---------------------------------------------------------------------------------------------")
+ 
+//     // 🔒 Validation
+//     if (!email || !password) {
+//       return res.status(400).json({
+//         errorMessage: "Email and password are required",
+//       });
+//     }
+
+//     if (password.length < 8) {
+//       return res.status(400).json({
+//         errorMessage: "Password must be at least 8 characters",
+//       });
+//     }
+
+//     // 🔍 Check existing user
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(409).json({
+//         errorMessage: "Email already registered",
+//       });
+//     }
+
+//     // 🔐 Hash password
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     // 🎯 Mentor logic
+//     let isMentor = false;
+//     let mentorStatus = "Become a Mentor";
+
+//     if (accountType === "Mentor Account") {
+//       isMentor = true;
+//       mentorStatus = "Pending";
+//     }
+
+//     // 🧠 Create user (ONLY schema fields)
+//     const user = await User.create({
+//       name: userName,
+//       email,
+//       password: hashedPassword,
+
+//       isMentor,
+//       mentorStatus,
+
+//       online: false,
+//       hasCoinAccount: false,
+//       referralCode: uuidv4().slice(0, 8),
+
+//       notificationSettings: {
+//         emailNotifications: true,
+//         pushNotifications: true,
+//         connectionRequests: true,
+//         messages: true,
+//         jobUpdates: true,
+//       },
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "User registered successfully",
+//       user: {
+//         id: user._id,
+//         email: user.email,
+//         isMentor: user.isMentor,
+//         mentorStatus: user.mentorStatus,
+//         userType: user.userType,
+//       },
+//     });
+
+//   } catch (error) {
+//     console.error("Register Error:", error);
+//     return res.status(500).json({
+//       errorMessage: "Server error during registration",
+//     });
+//   }
+// };
+
 
 export const RegisterUser = async (req, res) => {
-  const { name, email, password, phone } = req.body;
-  const { error } = registerSchemaValidation.validate({ name, email, password, phone });
-
-  if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
-
   try {
-    const ifExist = await User.findOne({ email });
-    if (ifExist) return res.json({ success: false, message: "User Already Exists" });
+    const { userName, email, password } = req.body;
 
-    const hashedPassword = await hash(password, 12);
-    await User.create({ email, name, password: hashedPassword, phone });
-
-    return res.json({ success: true, message: "Account created successfully" });
-  } catch (error) {
-    console.error("RegisterUser error:", error);
-    return res.json({ success: false, message: "Something went wrong" });
-  }
-};
-
-export const LoginUser = async (req, res) => {
-  const { email, password } = req.body;
-  const { error } = LoginschemaValidation.validate({ email, password });
-
-  if (error) return res.json({ success: false, message: error.details[0].message.replace(/['"]+/g, '') });
-
-  try {
-    const checkUser = await User.findOne({ email });
-    if (!checkUser) return res.json({ success: false, message: "Account not found" });
-
-    // Check if user has a password set (OAuth users might not have password)
-    if (!checkUser.password) {
-      return res.json({ 
-        success: false, 
-        message: "Please set a password to login. You previously signed in using OAuth.",
-        requiresPasswordSetup: true,
-        email: checkUser.email
+    // 🔒 Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        errorMessage: "Email and password are required",
       });
     }
 
-    const isMatch = await compare(password, checkUser.password);
-    if (!isMatch) return res.json({ success: false, message: "Incorrect password" });
+    if (password.length < 8) {
+      return res.status(400).json({
+        errorMessage: "Password must be at least 8 characters",
+      });
+    }
 
-    const token = jwt.sign({ id: checkUser._id, email: checkUser.email }, JWT_SECRET, { expiresIn: '1d' });
+    // 🔍 Check existing user
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        errorMessage: "Email already registered",
+      });
+    }
 
-    return res.json({ 
-      token, 
-      username: email,
-      id: checkUser._id,
-      user: {
-        id: checkUser._id,
-        email: checkUser.email,
-        name: checkUser.name,
-        givenName: checkUser.givenName,
-        familyName: checkUser.familyName,
-        picture: checkUser.picture
-      }
+    // 🔐 Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 🧠 Create user (ONLY schema fields)
+    const user = await User.create({
+      name: userName,
+      email,
+      password: hashedPassword,
+      role: "user",          // default but explicit
+      userType: "None",      // schema default
+      mentorStatus: "None",  // schema default
+      recruiterStatus: "None"
     });
+
+    return res.status(200).json({
+      success: true,
+      message: "User registered successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        userType: user.userType,
+        mentorStatus: user.mentorStatus,
+      },
+    });
+
   } catch (error) {
-    console.error("LoginUser error:", error);
-    return res.json({ success: false, message: "Something went wrong" });
+    console.error("Register Error:", error);
+    return res.status(500).json({
+      errorMessage: "Server error during registration",
+    });
   }
 };
+
+
+export const LoginUser = async (req, res) => {
+  try {
+    console.log("reached");
+
+    const { email, password } = req.body;
+    console.log(req.body);
+
+    // 🔒 Validation
+    if (!email || !password) {
+      return res.status(400).json({
+        errorMessage: "Email and password are required",
+      });
+    }
+
+    // 🔍 Find user
+    const user = await User.findOne({ email });
+    if (!user || !user.password) {
+      console.log("check");
+      return res.status(401).json({
+        errorMessage: "Invalid email or password",
+      });
+    }
+
+    // 🔐 Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        errorMessage: "Invalid email or password",
+      });
+    }
+
+    // 🔑 Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // 🟢 Update login state
+    user.online = true;
+    user.accessToken = token;
+    user.tokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // ❌ AUTO-GENERATED RESUME LOGIC REMOVED
+    // ❌ ACTIVE RESUME AUTO-ASSIGNMENT REMOVED
+
+    await user.save();
+
+    // ✅ Final response
+    return res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        picture: user.picture,
+        isMentor: user.isMentor,
+        mentorStatus: user.mentorStatus,
+        isRecruiter: user.isRecruiter,
+        userType: user.userType,
+        activeResume: user.activeResume || null,
+      },
+    });
+
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      errorMessage: "Server error during login",
+    });
+  }
+};
+
+
+
+
+
+
 
 
 export const getAllLogsByUser = async (req, res) => {
@@ -483,5 +660,150 @@ export const setPasswordForOAuthUser = async (req, res) => {
       success: false, 
       message: "Something went wrong while setting password" 
     });
+  }
+};
+
+// Get user data by email
+export const getUserByEmail = async (req, res) => {
+
+  if(!req.user.email){
+    req.user.email = 'rohitshekrsingh@gmail.com';
+  }
+  const { email } = req.user;
+
+  if (!email) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Email is required" 
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email }).select('-password -accessToken -refreshToken').lean();
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+
+    return res.json({ 
+      success: true, 
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        givenName: user.givenName,
+        familyName: user.familyName,
+        picture: user.picture,
+        phone: user.phone,
+        online: user.online,
+        locale: user.locale,
+        connections: user.connections,
+        connectionCount: user.connectionCount,
+        pendingConnections: user.pendingConnections,
+        sentConnectionRequests: user.sentConnectionRequests,
+        notificationSettings: user.notificationSettings,
+        lastNotificationRead: user.lastNotificationRead,
+        unreadNotificationCount: user.unreadNotificationCount,
+        isMentor: user.isMentor,
+        mentorProfile: user.mentorProfile,
+        mentorStatus: user.mentorStatus,
+        hasCoinAccount: user.hasCoinAccount,
+        referralCode: user.referralCode,
+        referredBy: user.referredBy,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching user by email:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Something went wrong while fetching user data" 
+    });
+  }
+};
+
+
+
+// GET /api/users/:userId
+export const getUserById = async (req, res) => {
+  try {
+
+
+  
+    
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    // Fetch user by ID
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Return only the fields you need (optional)
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      givenName: user.givenName,
+      familyName: user.familyName,
+      picture: user.picture,
+      email: user.email,
+      userType: user.userType,
+      studentDetails: user.studentDetails,
+      professionalDetails: user.professionalDetails,
+    };
+  console.log("oyeee");
+    return res.status(200).json({ success: true, user: userData });
+  } catch (error) {
+    console.error("Get User Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+// GET /api/mentors/:mentorId
+export const getMentorById = async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+
+    if (!mentorId) {
+      return res.status(400).json({ success: false, message: "Mentor ID is required" });
+    }
+
+    // Find mentor by ID and populate the 'user' field
+    const mentor = await Mentor.findById(mentorId).populate("user", "_id name email picture");
+
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: "Mentor not found" });
+    }
+
+    // Prepare data to return
+    const mentorData = {
+      _id: mentor._id,
+      user: mentor.user, // contains user _id, name, email, picture
+      expertise: mentor.expertise,
+      experience: mentor.experience,
+      bio: mentor.bio,
+      pricePerHour: mentor.pricePerHour,
+      interviewTypes: mentor.interviewTypes,
+      availability: mentor.availability,
+      rating: mentor.rating,
+      completedInterviews: mentor.completedInterviews,
+    };
+
+    return res.status(200).json({ success: true, mentor: mentorData });
+  } catch (error) {
+    console.error("Get Mentor Error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };

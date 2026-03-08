@@ -7,7 +7,7 @@ import {
   getSubscriptionPlans,
   getUserSubscriptions,
   getReferralStats
-} from '../controller/Coin.js';
+} from '../controller/coins/Coin.js';
 
 import authenticateToken from '../middleware/index.js';
 

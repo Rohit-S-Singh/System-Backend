@@ -1,11 +1,12 @@
 // routes/recruiterRoutes.js
 import express from 'express';
-import { addRecruiter, getUserRecruiters } from '../controller/Recruiter.js';
+import { requestRecruiter, getUserRecruiters, createRecruiter } from '../controller/Recruiter.js';
 // import { protect } from '../middleware/index.js';÷
 
 const router = express.Router();
 
-router.post('/', addRecruiter);
+router.post('/request-recruiter/:email', requestRecruiter);
 router.get('/', getUserRecruiters);
+router.post('/', createRecruiter);
 
 export default router;

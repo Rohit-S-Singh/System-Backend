@@ -1,166 +1,105 @@
 import mongoose from "mongoose";
 
-const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-  },
-  givenName: {
-    type: String,
-  },
-  familyName: {
-    type: String,
-  },
-  picture: {
-    type: String,
-  },
-  locale: {
-    type: String,
-  },
-  email: {
-    type: String,
-    required: [true, "Please provide an email"],
-    unique: true,
-  },
-  password: {
-    type: String,
-  },
-  phone: {
-    type: Number,
-  },
-  online: {
-    type: Boolean,
-    default: false,
-  },
-  accessToken: {
-    type: String,
-  },
-  refreshToken: {
-    type: String,
-  },
-  tokenExpiry: {
-    type: Date,
-  },
+const UserSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      trim: true,
+    },
 
-  // ✅ HTML email template field
-  htmlEmailTemplate: {
-    rawTemplate: {
+    email: {
       type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
     },
-    placeholders: {
-      type: Object,
-    },
-    finalHtml: {
-      type: String,
-    },
-  },
 
-  followupTemplate: {
-    type: [String],
-  },
-  
-  // Connection-related fields
-  connections: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'users'
-  }],
-  connectionCount: {
-    type: Number,
-    default: 0
-  },
-  pendingConnections: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'users'
-  }],
-  sentConnectionRequests: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'users'
-  }],
-  
-  // Notification-related fields
-  notificationSettings: {
-    emailNotifications: {
-      type: Boolean,
-      default: true
-    },
-    pushNotifications: {
-      type: Boolean,
-      default: true
-    },
-    connectionRequests: {
-      type: Boolean,
-      default: true
-    },
-    messages: {
-      type: Boolean,
-      default: true
-    },
-    jobUpdates: {
-      type: Boolean,
-      default: true
-    }
-  },
-  lastNotificationRead: {
-    type: Date,
-    default: Date.now
-  },
-  unreadNotificationCount: {
-    type: Number,
-    default: 0
-  },
-  
-  // Mentor-related fields
-  isMentor: {
-    type: Boolean,
-    default: false
-  },
-  mentorProfile: {
-    expertise: [{
-      type: String
-    }],
-    experience: {
-      type: Number, // years of experience
-      default: 0
-    },
-    bio: {
-      type: String
-    },
-    hourlyRate: {
-      type: Number
-    },
-    availability: {
-      type: [{
-        day: String,
-        startTime: String,
-        endTime: String
-      }]
-    },
-    interviewTypes: [{
+    password: {
       type: String,
-      enum: ['technical', 'behavioral', 'mock', 'resume_review', 'career_guidance', 'other']
-    }]
+      required: true,
+    },
+
+    phone: {
+      type: Number,
+    },
+
+    // 🔐 ROLE SYSTEM (Admin support)
+    role: {
+      type: String,
+      enum: ["user", "admin" ],
+      default: "user",
+    },
+
+    // 👤 USER TYPE
+    userType: {
+      type: String,
+      enum: ["student", "working_professional", "None"],
+      default: "None",
+    },
+
+    // 🎓 Mentor & Recruiter
+    mentorStatus: {
+      type: String,
+      enum: ["None", "pending", "approved"],
+      default: "None",
+    },
+
+    recruiterStatus: {
+      type: String,
+      enum: ["None", "Pending", "Approved"],
+      default: "None",
+    },
+
+    // 📄 Resume
+    activeResume: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "resumes",
+      default: null,
+    },
+
+    // 🤝 CONNECTION SYSTEM
+    connections: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users",
+      },
+    ],
+
+    pendingConnections: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users",
+      },
+    ],
+
+    sentConnectionRequests: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users",
+      },
+    ],
+
+    connectionCount: {
+      type: Number,
+      default: 0,
+    },
+
+    // 🔗 Referral
+    referredBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+    },
   },
-  mentorStatus: {
-    type: String,
-    enum: ['active', 'inactive', 'busy'],
-    default: 'inactive'
-  },
-  
-  // Coin-related fields
-  hasCoinAccount: {
-    type: Boolean,
-    default: false
-  },
-  referralCode: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-  referredBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'users'
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 const User = mongoose.models.users || mongoose.model("users", UserSchema);
-
 export default User;
+
+
+
+
+
+
+
+
