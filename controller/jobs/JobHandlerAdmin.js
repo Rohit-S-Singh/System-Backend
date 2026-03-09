@@ -209,7 +209,11 @@ export const removeExpiredJobs = async () => {
 // GET /api/jobs/random?limit=20
 export const getRandomJobs = async (req, res) => {
   try {
-    const limit = Number(req.query.limit) || 20;
+
+    const limitFlag = Number(req.query.limitFlag);
+    const limit = limitFlag === 1 ? Number(req.query.limit) : 1000000;
+
+
 
     const jobs = await Job.aggregate([
       {
@@ -218,9 +222,12 @@ export const getRandomJobs = async (req, res) => {
           status: "Open",
         },
       },
-      // {
-        // $sample: { size: limit },
-      // },
+      {
+        $sort: { createdAt: -1 }, // newest first
+      },
+      {
+        $limit: limit,
+      },
       {
         $project: {
           _id: 1,
@@ -246,7 +253,6 @@ export const getRandomJobs = async (req, res) => {
     });
   }
 };
-
 
 
 
