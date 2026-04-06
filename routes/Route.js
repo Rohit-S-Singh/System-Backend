@@ -89,6 +89,12 @@ Router.get("/authUrl", getAuthUrl);
 Router.post("/oauth2/callback", GoogleAuthHandler);
 Router.post("/set-password", setPasswordForOAuthUser);
 
+import blogRoutes from "./BlogRoutes.js";
+
+
+Router.use("/blogs", blogRoutes);
+
+
 // =======================================================
 // 🔹 AUTHENTICATED USER ROUTES
 // =======================================================
