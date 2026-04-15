@@ -103,9 +103,9 @@ Router.use("/blogs", blogRoutes);
 
 // ---------- User ----------
 Router.post("/first-time-details-fill", setupProfile);
-Router.get("/get-user-by-email", authenticateToken, getUserByEmail);
+Router.get("/get-user-by-email", getUserByEmail);
 Router.put("/update", updateUserProfile);
-Router.get("/get-user-by-email", authenticateToken, getUserByEmail);
+Router.get("/get-user-by-email", getUserByEmail);
 Router.post("/enter-updateUserCategory", updateUserCategory);
 Router.get("/users/:userId", getUserById);
 // ---------- Resume ----------
