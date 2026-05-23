@@ -11,6 +11,7 @@ import { google } from 'googleapis';
 import mongoose from "mongoose";
 import dotenv from 'dotenv';
 import { processInterviewRequest } from "../../services/interviewRequest.service.js";
+import { evaluateWrittenAnswer } from "../../services/geminiService.js";
 import { log } from "console";
 dotenv.config();
 
@@ -863,5 +864,53 @@ export const getInterviewHistory = async (req, res) => {
   } catch (error) {
     console.error("Interview history error:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+// import { evaluateWrittenAnswer } from "../../services/geminiService.js";
+
+export const evaluateAnswerController = async (
+  req,
+  res
+) => {
+  try {
+
+    const {
+      question,
+      writtenAnswer,
+      spokenTranscript,
+      recentConversation,
+    } = req.body;
+
+    if (
+      !question ||
+      (!writtenAnswer && !spokenTranscript)
+    ) {
+      return res.status(400).json({
+        error:
+          "Question and answer required",
+      });
+    }
+
+    const evaluation =
+      await evaluateWrittenAnswer({
+        question,
+        writtenAnswer,
+        spokenTranscript,
+        recentConversation,
+      });
+
+    return res.status(200).json(
+      evaluation
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    return res.status(500).json({
+      error: "Evaluation failed",
+    });
   }
 };
