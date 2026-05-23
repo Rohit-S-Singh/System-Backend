@@ -15,7 +15,8 @@ getScheduledInterviews,
   updateInterviewFeedback,
   getMentorRequests,
   handleInterviewRequest,
-  handleInterviewByEmail
+  handleInterviewByEmail,
+  evaluateAnswerController,
 } from '../controller/interviews/Interview.js';
 
 import authenticateToken from '../middleware/index.js';
@@ -58,5 +59,6 @@ Router.get("/scheduled", getScheduledInterviews);
 Router.patch("/cancel/:interviewId", cancelScheduledInterview);
 Router.patch("/reschedule/:interviewId", rescheduleInterview);
 Router.post('/complete/:interviewId', completeInterview);
+Router.post('/evaluate-answer', evaluateAnswerController);
 
 export default Router; 

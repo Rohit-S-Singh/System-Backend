@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@shopify/shopify-api": "^11.6.1",
     "@supabase/supabase-js": "^2.94.0",
     "axios": "^1.7.9",
