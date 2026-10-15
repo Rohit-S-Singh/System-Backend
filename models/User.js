@@ -16,7 +16,8 @@ const UserSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      // Not required: users who sign up via Google OAuth have no password
+      // until they explicitly set one (see setPasswordForOAuthUser).
     },
 
     phone: {
@@ -88,6 +89,29 @@ const UserSchema = new mongoose.Schema(
     referredBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
+    },
+
+    // 🔑 Google OAuth profile (Sign-in)
+    oauthProvider: { type: String },
+    givenName: { type: String },
+    familyName: { type: String },
+    picture: { type: String },
+    locale: { type: String },
+    emailVerified: { type: Boolean },
+
+    // 📧 Gmail OAuth (Connect Gmail / send-as-user)
+    accessToken: { type: String },
+    refreshToken: { type: String },
+    tokenExpiry: { type: Date },
+
+    // ✉️ Recruiter outreach templates
+    htmlEmailTemplate: {
+      finalHtml: { type: String },
+      subject: { type: String },
+    },
+    followupTemplate: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
     },
   },
   { timestamps: true }

@@ -7,6 +7,7 @@ import {
   RegisterUser,
   GoogleAuthHandler,
   getAuthUrl,
+  oauthCallback,
   setPasswordForOAuthUser,
   CheckEmailConnection,
   sendEmail,
@@ -17,6 +18,11 @@ import {
   getEmailThreadLogs,
   getUserByEmail
 } from "../controller/auth.js";
+
+import {
+  saveFollowUpTemplate,
+  fetchFollowUpTemplate,
+} from "../controller/Email-Sender.js";
 
 
 
@@ -39,7 +45,9 @@ import {
   getAllResumes,
   setActiveResume,
   getActiveResume,
-  uploadResume
+  uploadResume,
+  deleteResume,
+  setMainResume,
 } from "../controller/resumeController.js";
 
 import {
@@ -86,7 +94,8 @@ Router.post("/register", RegisterUser);
 Router.post("/verifytoken", verifyToken);
 
 Router.get("/authUrl", getAuthUrl);
-Router.post("/oauth2/callback", GoogleAuthHandler);
+Router.post("/oauth2/callback", GoogleAuthHandler); // Google Sign-In (ID token from the login button)
+Router.get("/oauth2/callback", oauthCallback); // Gmail "Connect" consent redirect (code exchange)
 Router.post("/set-password", setPasswordForOAuthUser);
 
 import blogRoutes from "./BlogRoutes.js";
@@ -110,15 +119,17 @@ Router.post("/enter-updateUserCategory", updateUserCategory);
 Router.get("/users/:userId", getUserById);
 // ---------- Resume ----------
 Router.get("/resume/my", authenticateToken, getMyResume);
-Router.get("/resume/all", getAllResumes);
-Router.post("/resume/set-active", setActiveResume);
-Router.get("/resume/active", getActiveResume);
+Router.get("/resume/all", authenticateToken, getAllResumes);
+Router.post("/resume/set-active", authenticateToken, setActiveResume);
+Router.get("/resume/active", authenticateToken, getActiveResume);
 Router.post(
   "/resume/upload",
   authenticateToken,
   uploadResumeMiddleware.single("resume"),
   uploadResume
 );
+Router.delete("/resume/:id", authenticateToken, deleteResume);
+Router.put("/resume/:id/set-main", authenticateToken, setMainResume);
 
 // ---------- Chat ----------
 Router.get("/users", getAllUsers);
@@ -141,6 +152,9 @@ Router.get("/email/logs/all", getAllLogsByUser);
 
 Router.post("/email/template", saveTemplateByEmail);
 Router.get("/email/template", fetchTemplateByEmail);
+
+Router.post("/email/followup-templates", saveFollowUpTemplate);
+Router.get("/email/followup-templates/:email", fetchFollowUpTemplate);
 
 // ---------- Search ----------
 Router.get("/search/jobs", searchJobs);

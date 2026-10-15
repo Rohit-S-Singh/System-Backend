@@ -1,12 +1,14 @@
 // routes/recruiterRoutes.js
 import express from 'express';
-import { requestRecruiter, getUserRecruiters, createRecruiter } from '../controller/Recruiter.js';
-// import { protect } from '../middleware/index.js';÷
+import { requestRecruiter, getUserRecruiters, createRecruiter, syncRecruitersFromSheet, deleteRecruiter } from '../controller/Recruiter.js';
+import authenticateToken from '../middleware/index.js';
 
 const router = express.Router();
 
 router.post('/request-recruiter/:email', requestRecruiter);
 router.get('/', getUserRecruiters);
 router.post('/', createRecruiter);
+router.post('/sync-sheet', syncRecruitersFromSheet);
+router.delete('/:id', authenticateToken, deleteRecruiter);
 
 export default router;

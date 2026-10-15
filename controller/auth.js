@@ -42,9 +42,16 @@ export const getAuthUrl = (req, res) => {
 };
 
 export const oauthCallback = async (req, res) => {
-  const { code } = req.query;
+  const { code, error: oauthError } = req.query;
+  const frontendBase = process.env.FRONTEND_URL || "http://localhost:3000";
 
-  if (!code) return res.status(400).json({ message: "Code not provided" });
+  if (oauthError) {
+    return res.redirect(`${frontendBase}/email-sender?gmail=denied`);
+  }
+
+  if (!code) {
+    return res.redirect(`${frontendBase}/email-sender?gmail=error`);
+  }
 
   try {
     const { tokens } = await oAuth2Client.getToken({ code, redirect_uri: REDIRECT_URI });
@@ -55,28 +62,37 @@ export const oauthCallback = async (req, res) => {
 
     const { email, name, given_name, family_name, picture, locale } = data;
 
+    if (!email) {
+      throw new Error("Google did not return an email for this account");
+    }
+
     let user = await User.findOne({ email });
     if (!user) {
       user = new User({ email });
     }
 
     user.accessToken = tokens.access_token;
-    user.refreshToken = tokens.refresh_token;
+    // Google only returns refresh_token on first consent (or when prompt=consent
+    // forces re-consent, which getAuthUrl already sets) — don't clobber an
+    // existing refresh token if this particular response omitted it.
+    if (tokens.refresh_token) {
+      user.refreshToken = tokens.refresh_token;
+    }
     user.tokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
 
     // Optional: Store profile info
-    user.name = name;
+    user.name = user.name || name;
     user.givenName = given_name;
     user.familyName = family_name;
-    user.picture = picture;
+    user.picture = user.picture || picture;
     user.locale = locale;
 
     await user.save();
 
-    return res.send("✅ Gmail connected successfully!");
+    return res.redirect(`${frontendBase}/email-sender?gmail=connected`);
   } catch (err) {
     console.error("Callback error:", err.response?.data || err.message);
-    return res.status(500).json({ message: "OAuth callback failed" });
+    return res.redirect(`${frontendBase}/email-sender?gmail=error`);
   }
 };
 
@@ -86,13 +102,27 @@ import path from "path";
 import { log } from 'console';
 
 export const sendEmail = async (req, res) => {
-  const { to, subject, body, from, threadId } = req.body;
+  const { to, subject, body, from, threadId, recruiterId } = req.body;
   const attachment = req.file;
 
   try {
     const user = await User.findOne({ email: from });
     if (!user || !user.refreshToken) {
       return res.status(401).json({ success: false, message: "Email not connected" });
+    }
+
+    // Resolve the recruiter *before* sending anything. Recruiters are a
+    // shared directory, so any user can email any recruiter in it — not
+    // just ones they personally added. Matching by recruiterId (when the
+    // caller has it) avoids ambiguity when two recruiter rows share the
+    // same email address; by email is kept only as a fallback for older
+    // callers.
+    const recruiter = recruiterId
+      ? await Recruiter.findOne({ _id: recruiterId }).lean()
+      : await Recruiter.findOne({ email: to }).lean();
+
+    if (!recruiter) {
+      return res.status(404).json({ success: false, message: "Recruiter not found" });
     }
 
     const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
@@ -154,12 +184,6 @@ export const sendEmail = async (req, res) => {
 
     const response = await gmail.users.messages.send(gmailRequest);
 
-    const recruiter = await Recruiter.findOne({ email: to }).lean();
-    
-    if (!recruiter) {
-      return res.status(404).json({ success: false, message: "Recruiter not found" });
-    }
-
     const threadIdToSave = response.data.threadId;
 
     await EmailLog.create({
@@ -194,10 +218,9 @@ export const getEmailLogs = async (req, res) => {
   try {
     const logs = await EmailLog.find({ sentBy: userEmail, recruiterId }).lean();
 
-    if (!logs.length) {
-      return res.status(404).json({ success: false, message: "No email logs found." });
-    }
-
+    // An empty result is a normal state (recruiter hasn't been emailed yet),
+    // not an error — always respond 200 so callers don't have to treat it
+    // as a failure.
     const logsWithThreadId = logs.map(log => ({
       ...log,
       threadId: log.threadId || null, // Include threadId if it exists
@@ -503,10 +526,7 @@ export const getAllLogsByUser = async (req, res) => {
   try {
     const logs = await EmailLog.find({ sentBy: userEmail }).lean();
 
-    if (!logs.length) {
-      return res.status(404).json({ success: false, message: "No logs found for this user." });
-    }
-
+    // No logs yet is a normal state, not an error.
     res.json({ success: true, logs });
   } catch (error) {
     console.error("Error fetching logs by user:", error);
@@ -517,7 +537,7 @@ export const getAllLogsByUser = async (req, res) => {
 
 export const saveTemplateByEmail = async (req, res) => {
   try {
-    const { email, rawTemplate, placeholders, finalHtml } = req.body;
+    const { email, rawTemplate, placeholders, finalHtml, subject } = req.body;
 
     if (!email || !finalHtml) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -528,6 +548,7 @@ export const saveTemplateByEmail = async (req, res) => {
 
     user.htmlEmailTemplate = {
       finalHtml,
+      subject: subject || user.htmlEmailTemplate?.subject || "",
     };
 
     await user.save();
@@ -559,9 +580,10 @@ export const fetchTemplateByEmail = async (req, res) => {
   }
 };
 
-// Route handler
+// Route handler — registered as GET /api/email/journey, so params come
+// from the query string, not the body.
 export const getEmailThreadLogs = async (req, res) => {
-  const { email, threadId } = req.body; // or req.query for GET
+  const { email, threadId } = req.query;
 
   if (!email || !threadId) {
     return res.status(400).json({ success: false, message: "Email and threadId are required." });
@@ -569,19 +591,25 @@ export const getEmailThreadLogs = async (req, res) => {
 
   try {
     const logs = await EmailLog.find({
-      sentTo: email,
+      // `email` here is the logged-in job-seeker (the sender), not the
+      // recruiter, so it must match `sentBy`, not `sentTo`.
+      sentBy: email,
       threadId: threadId,
     }).sort({ createdAt: 1 }); // Sorted by time
 
-    if (!logs || logs.length === 0) {
-      return res.status(404).json({ success: false, message: "No logs found for this thread." });
-    }
-
-    const formattedLogs = logs.flatMap(log => {
-      const formattedLog = { status: log.status, createdAt: log.createdAt };
+    // No logs yet is a normal state, not an error.
+    // Keep threadId/messageId on every entry — callers (e.g. "take
+    // follow-up") need it to reply on the same Gmail thread instead of
+    // starting a new one.
+    const formattedLogs = (logs || []).flatMap(log => {
+      const formattedLog = {
+        status: log.status,
+        createdAt: log.createdAt,
+        threadId: log.threadId || null,
+      };
       if (log.status === 'follow_up') {
         return [
-          { status: 'no-reply', createdAt: null },
+          { status: 'no-reply', createdAt: null, threadId: log.threadId || null },
           formattedLog,
         ];
       }
