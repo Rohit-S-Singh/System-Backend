@@ -16,13 +16,19 @@ const saveFollowUpTemplate = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        // Ensure followupTemplate is an array
-        if (!Array.isArray(user.followupTemplate)) {
-            user.followupTemplate = [];
+        // The editor sends the full, up-to-date list of templates on every
+        // save, so replace the stored list rather than appending to it.
+        // A single template object/string is still appended, for callers
+        // that only want to add one.
+        if (Array.isArray(followupTemplate)) {
+            user.followupTemplate = followupTemplate;
+        } else {
+            if (!Array.isArray(user.followupTemplate)) {
+                user.followupTemplate = [];
+            }
+            user.followupTemplate.push(followupTemplate);
         }
 
-        // Add the new follow-up template to the array
-        user.followupTemplate.push(followupTemplate);
         await user.save();
 
         res.status(200).json({ message: 'Follow-up template saved successfully.', user });

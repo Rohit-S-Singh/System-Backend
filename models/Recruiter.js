@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 const recruiterSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: false },
+  company: { type: String, default: "" },
   addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, default: 'No Response' },
   sentAt: { type: Date, default: null }

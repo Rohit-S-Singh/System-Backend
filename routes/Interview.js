@@ -17,6 +17,7 @@ getScheduledInterviews,
   handleInterviewRequest,
   handleInterviewByEmail,
   evaluateAnswerController,
+  generateAndDownloadReport
 } from '../controller/interviews/Interview.js';
 
 import authenticateToken from '../middleware/index.js';
@@ -60,5 +61,9 @@ Router.patch("/cancel/:interviewId", cancelScheduledInterview);
 Router.patch("/reschedule/:interviewId", rescheduleInterview);
 Router.post('/complete/:interviewId', completeInterview);
 Router.post('/evaluate-answer', evaluateAnswerController);
+
+// Assuming your frontend POSTs the AI results here to trigger the download
+Router.post('/reports/generate', generateAndDownloadReport);
+
 
 export default Router; 

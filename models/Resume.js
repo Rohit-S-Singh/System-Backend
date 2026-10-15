@@ -30,6 +30,13 @@ const ResumeSchema = new mongoose.Schema(
       },
     },
 
+    // 🔹 Flat fields the frontend (UploadResume.jsx) actually reads
+    fileName: { type: String },
+    fileSize: { type: Number }, // KB
+    fileType: { type: String }, // "pdf" | "docx"
+    fileUrl: { type: String },
+    isMain: { type: Boolean, default: false },
+
     // 🔹 Structured resume content (same for all types)
     content: {
       header: {

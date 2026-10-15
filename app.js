@@ -17,8 +17,12 @@ import { Session } from "inspector";
 
 dotenv.config();
 const app = express();
-const port = 8080;
-const connectionUrl = "mongodb://rohitssingh17:Seeyouagain11!@ac-lo7eev6-shard-00-00.xo7hitn.mongodb.net:27017,ac-lo7eev6-shard-00-01.xo7hitn.mongodb.net:27017,ac-lo7eev6-shard-00-02.xo7hitn.mongodb.net:27017/?ssl=true&replicaSet=atlas-4oinm6-shard-0&authSource=admin&retryWrites=true&w=majority";
+const port = process.env.PORT || 8080;
+const connectionUrl = process.env.connectionUrl;
+
+if (!connectionUrl) {
+  throw new Error("Missing required env var: connectionUrl (MongoDB connection string)");
+}
 
 
 
