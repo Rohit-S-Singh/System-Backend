@@ -260,14 +260,14 @@ export const createRecruiter = async (req, res) => {
 // as admin on both the frontend and here, plus anyone with role: "admin".
 const ADMIN_FALLBACK_EMAIL = "rohitshekrsingh@gmail.com";
 
+const isRequesterAdmin = async (req) => {
+  const requester = req.user?.userId ? await User.findById(req.user.userId) : null;
+  return requester?.role === 'admin' || requester?.email?.toLowerCase() === ADMIN_FALLBACK_EMAIL;
+};
+
 export const deleteRecruiter = async (req, res) => {
   try {
-    const requester = req.user?.userId ? await User.findById(req.user.userId) : null;
-    const isAdmin =
-      requester?.role === 'admin' ||
-      requester?.email?.toLowerCase() === ADMIN_FALLBACK_EMAIL;
-
-    if (!isAdmin) {
+    if (!(await isRequesterAdmin(req))) {
       return res.status(403).json({ success: false, message: 'Only admins can delete recruiters.' });
     }
 
@@ -282,6 +282,25 @@ export const deleteRecruiter = async (req, res) => {
   } catch (error) {
     console.error('Delete recruiter error:', error);
     return res.status(500).json({ success: false, message: 'Failed to delete recruiter.' });
+  }
+};
+
+export const bulkDeleteRecruiters = async (req, res) => {
+  try {
+    if (!(await isRequesterAdmin(req))) {
+      return res.status(403).json({ success: false, message: 'Only admins can delete recruiters.' });
+    }
+
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'No recruiter ids provided.' });
+    }
+
+    const result = await Recruiter.deleteMany({ _id: { $in: ids } });
+    return res.json({ success: true, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Bulk delete recruiters error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete recruiters.' });
   }
 };
 
